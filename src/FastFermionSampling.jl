@@ -13,6 +13,7 @@ function FFS(u::Matrix{ComplexF64}, L::Int, N::Int)
     v = randperm(N)
     U = u[:,v]
     # For x1 case, P(x1;m) = |U_{x1, m1}|^2 
+    
 end
 
 end
