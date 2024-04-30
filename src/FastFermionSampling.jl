@@ -7,6 +7,7 @@ using LinearAlgebra
 
 export FFS
 
+include("Lattices.jl")
 include("FFS.jl")
 
 end
