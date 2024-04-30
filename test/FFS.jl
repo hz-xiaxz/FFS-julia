@@ -49,8 +49,8 @@ function visualize(U::AbstractMatrix, L::Int, N::Int, itertime::Int)
     end
 
     ax2 = Axis(fig[1, 2], title="FFS", xlabel="Event", ylabel="Frequency")
-    CairoMakie.hist!(ax2,sampled, bins=400, normalization=:pdf, color=:red)
+    CairoMakie.hist!(ax2, sampled, bins=400, normalization=:pdf, color=:red)
 
     fig
-    save("./tmp/benchmark.png",fig)
+    save("./tmp/benchmark.png", fig)
 end

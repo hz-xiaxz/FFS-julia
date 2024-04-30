@@ -1,3 +1,7 @@
+using Random
+using StatsBase
+using LinearAlgebra
+
 function FFS(u::AbstractMatrix, L::Int, N::Int)::Vector{Bool}
     # U: Matrix{ComplexF64}: the sampling ensemble
     # L: Int: the number of energy states
@@ -25,8 +29,7 @@ function FFS(u::AbstractMatrix, L::Int, N::Int)::Vector{Bool}
         # I suggest not using the gaussian elimination
         U_x = U[sampled, 1:i]
         B = -U[1:i, i+1]
-        n_vec = [U_x \ B; 1]
-        n_vec = normalize(n_vec)
+        n_vec = normalize([U_x \ B; 1])
     end
     return sampled
 end
