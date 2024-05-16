@@ -1,7 +1,8 @@
 using FastFermionSampling
+using Test
 using StatsBase
+using Random
 using LinearAlgebra
-using CairoMakie
 
 function combinations(L::Int, N::Int)
     if N == 0
@@ -28,29 +29,27 @@ function exact_sample(U::AbstractMatrix, L::Int, N::Int)
 
 end
 
-function visualize(U::AbstractMatrix, L::Int, N::Int, itertime::Int)
-    fig = Figure()
-
-    ax = Axis(fig[1, 1], title="Exact_sample", xlabel="Event", ylabel="Probability")
-
+@testset "FFS" begin
+    # caculate the KL divergence between the exact sample and the FFS
+    iter_time = 2000
+    L = 10
+    N = 2
+    rng = MersenneTwister(1234)
+    U = randn(rng, Float64, L, N)
     events, p = exact_sample(U, L, N)
-
-    events_int = zeros(Int, length(events))
-    for (i, ev) in enumerate(events)
-        events_int[i] = evalpoly(2, reverse(ev))
+    sampled = Dict{Int,Float64}()
+    for (i,ev) in enumerate(events)
+        sampled[evalpoly(2, reverse(ev))] = 1e-8
     end
-
-    CairoMakie.scatter!(ax, events_int, p)
-
-    sampled = zeros(Int, itertime)
-
-    for i in 1:itertime
-        sampled[i] = evalpoly(2, reverse(FastFermionSampling.FFS(U, L, N)))
+    for i in 1:iter_time
+        sampled[evalpoly(2, reverse(FFS(U, L, N)))] += 1
     end
-
-    ax2 = Axis(fig[1, 2], title="FFS", xlabel="Event", ylabel="Frequency")
-    CairoMakie.hist!(ax2, sampled, bins=400, normalization=:pdf, color=:red)
-
-    fig
-    save("./tmp/benchmark.png", fig)
+    q = zeros(Float64, length(keys(sampled)))
+    for (i,key) in enumerate(sort(collect(keys(sampled))))
+        q[i] = sampled[key]
+    end
+    normalize!(q)
+    # KL divergence ∑ p(x) log(p(x)/q(x))
+    kl = sum(p .* log.(p ./ q))
+    @test kl ≈ 0 atol = 1e-1
 end
