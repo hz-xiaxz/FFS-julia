@@ -1,7 +1,3 @@
-using Random
-using StatsBase
-using LinearAlgebra
-
 function FFS(u::AbstractMatrix, L::Int, N::Int)::Vector{Bool}
     # U: Matrix{ComplexF64}: the sampling ensemble
     # L: Int: the number of energy states
