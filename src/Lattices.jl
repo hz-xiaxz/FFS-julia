@@ -5,6 +5,7 @@ struct Open <: AbstractBoundary end
 struct LatticeRectangular{B}
     nx::Int
     ny::Int
+    ns::Int
     neigh::Vector{Vector{Int}}
 end
 
@@ -13,9 +14,10 @@ end
     LatticeRectangular(nx::Int, ny::Int, B::Open)
 """
 function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
+    ns = nx * ny
     # Create site index array
-    neigh = Vector{Vector{Int}}(undef, nx * ny)
-    rectl = reshape(1:nx*ny, nx, ny)
+    neigh = Vector{Vector{Int}}(undef, ns)
+    rectl = reshape(1:ns, nx, ny)
 
     # Define neighbor indices for each direction
     up = circshift(rectl, (0, 1))
@@ -24,16 +26,17 @@ function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
     left = circshift(rectl, (-1, 0))
 
     # Store neighbor information in a nested vector
-    for i in 1:nx*ny
+    for i in 1:ns
         neigh[i] = [up[i], right[i], down[i], left[i]]
     end
-    return LatticeRectangular{B}(nx, ny, neigh)
+    return LatticeRectangular{B}(nx, ny, ns, neigh)
 end
 
 function LatticeRectangular(nx::Int, ny::Int, B::Open)
-    neigh = Vector{Vector{Int}}(undef, nx * ny)
+    ns = nx * ny
+    neigh = Vector{Vector{Int}}(undef, ns)
     # Loop through each site
-    for i in 1:nx*ny
+    for i in 1:ns
         neighbors = Int[]
 
         # Identify valid neighbors for each direction
@@ -53,7 +56,7 @@ function LatticeRectangular(nx::Int, ny::Int, B::Open)
         # Store neighbor list for the current site
         neigh[i] = neighbors
     end
-    return LatticeRectangular{B}(nx, ny, neigh)
+    return LatticeRectangular{B}(nx, ny, ns, neigh)
 
 end
 
