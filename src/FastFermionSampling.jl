@@ -5,9 +5,12 @@ using Random
 using StatsBase
 using LinearAlgebra
 
-export FFS
+export FFS, AHmodel, LatticeRectangular, getHmat
+export Periodic, Open
 
 include("Lattices.jl")
+include("Orbitals.jl")
 include("FFS.jl")
+include("Ansatz.jl")
 
 end
