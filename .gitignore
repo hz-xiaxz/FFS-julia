@@ -6,3 +6,4 @@
 /docs/build/
 /tmp
 FastFermionSampling.code-workspace
+examples/Manifest.toml
