@@ -23,6 +23,7 @@ U_down: Matrix
     Unitary matrix for down spins
 """
 struct AHmodel <: AbstractOrbitals
+    lattice::LatticeRectangular
     t::Float64
     W::Float64
     U::Float64
@@ -64,6 +65,47 @@ function AHmodel(lattice::LatticeRectangular, t::Float64, W::Float64, U::Float64
     sorted_indices = sortperm(vals)
     U_up = vecs[:, sorted_indices[1:N_up]]
     U_down = vecs[:, sorted_indices[1:N_down]]
-    return AHmodel(t, W, U, N_up, N_down, omega, U_up, U_down)
+    return AHmodel(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
 
+end
+
+"""
+return |x'> = H|x> where H = -t ∑_<i,j> c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i
+"""
+function getxprime(orb::AHmodel, x::Vector{Bool})
+    @assert length(x) == 2 * length(orb.omega) "x should have the same length as omega"
+    L = length(x) ÷ 2  # Int division
+    occp::Vector{Int} = x[1:L] + x[L+1:end]
+    xprime = Dict{Vector{Bool},Float64}() # HACK, I use Dict to store the Fock Basis and its coefficient, will it be more efficient to use two-element tuple? 
+    # consider the spin up case
+    for i in 1:L
+        if x[i] == true
+            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
+            if occp[i] == 2
+                xprime[x] += orb.U # Hubbard Interaction
+            end
+            for neigh in orb.lattice.neigh[i]
+                if x[neigh] == false
+                    _x = copy(x)
+                    _x[i] = false
+                    _x[neigh] = true
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                end
+            end
+        end
+    end
+    for i in L+1:length(x)
+        if x[i] == true
+            xprime[x]  = get!(xprime, x, 0.0) + orb.omega[i-L] # On-site energy
+            for neigh in orb.lattice.neigh[i-L]
+                if x[neigh] == false
+                    _x = copy(x)
+                    _x[i] = false
+                    _x[neigh+L] = true
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                end
+            end
+        end
+    end
+    return xprime
 end

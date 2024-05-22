@@ -6,7 +6,7 @@ using StatsBase
 using LinearAlgebra
 
 export FFS, AHmodel, LatticeRectangular, getHmat
-export Periodic, Open
+export Periodic, Open, getxprime
 
 include("Lattices.jl")
 include("Orbitals.jl")
