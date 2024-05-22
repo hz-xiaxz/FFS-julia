@@ -16,7 +16,6 @@ end
     x = [true, true, false, false, false, true, true, false]
     xprime = getxprime(orb, x)
     occp = x[1:4] + x[5:end]
-    @show occp
     @test length(keys(xprime)) == 5
     @test xprime[x] ≈ sum(occp .* orb.omega) + 1.0
     @test xprime[[false, true, true, false, false, true, true, false]]  == -2
