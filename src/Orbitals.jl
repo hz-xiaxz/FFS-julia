@@ -22,16 +22,16 @@ U_up: Matrix
 U_down: Matrix
     Unitary matrix for down spins
 """
-struct AHmodel <: AbstractOrbitals
-    lattice::LatticeRectangular
+struct AHmodel{B, RT} <: AbstractOrbitals
+    lattice::LatticeRectangular{B}
     t::Float64
     W::Float64
     U::Float64
     N_up::Int
     N_down::Int
     omega::Vector{Float64}
-    U_up::Matrix
-    U_down::Matrix
+    U_up::Matrix{RT}
+    U_down::Matrix{RT}
 end
 
 """
@@ -72,36 +72,35 @@ end
 """
 return |x'> = H|x> where H = -t ∑_<i,j> c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i
 """
-function getxprime(orb::AHmodel, x::Vector{Bool})
-    @assert length(x) == 2 * length(orb.omega) "x should have the same length as omega"
+function getxprime(orb::AHmodel, x::BitStr{N, T}) where {N, T}
+    @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 x $(length(orb.omega))), got: $N"
     L = length(x) ÷ 2  # Int division
-    occp::Vector{Int} = x[1:L] + x[L+1:end]
-    xprime = Dict{Vector{Bool},Float64}() # HACK, I use Dict to store the Fock Basis and its coefficient, will it be more efficient to use two-element tuple? 
+    xprime = Dict{typeof(x),Float64}() # HACK, I use Dict to store the Fock Basis and its coefficient, will it be more efficient to use two-element tuple? 
     # consider the spin up case
-    for i in 1:L
-        if x[i] == true
+    @inbounds for i in 1:L
+        if readbit(x, i) == 1
             xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
-            if occp[i] == 2
+            if readbit(x, i) == 1 && readbit(x, i+L) == 1 #occp[i] == 2
                 xprime[x] += orb.U # Hubbard Interaction
             end
             for neigh in orb.lattice.neigh[i]
-                if x[neigh] == false
-                    _x = copy(x)
-                    _x[i] = false
-                    _x[neigh] = true
+                if readbit(x, neigh) == 0
+                    _x = x
+                    _x &= ~indicator(T, i)
+                    _x |= indicator(T, neigh)
                     xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
                 end
             end
         end
     end
-    for i in L+1:length(x)
-        if x[i] == true
+    @inbounds for i in L+1:length(x)
+        if readbit(x, i) == 1
             xprime[x]  = get!(xprime, x, 0.0) + orb.omega[i-L] # On-site energy
             for neigh in orb.lattice.neigh[i-L]
-                if x[neigh] == false
-                    _x = copy(x)
-                    _x[i] = false
-                    _x[neigh+L] = true
+                if readbit(x, neigh) == 0
+                    _x = x
+                    _x &= ~indicator(T, i)
+                    _x |= indicator(T, neigh+L)
                     xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
                 end
             end
