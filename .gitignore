@@ -7,3 +7,4 @@
 /tmp
 FastFermionSampling.code-workspace
 examples/Manifest.toml
+.vscode/

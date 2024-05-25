@@ -4,9 +4,10 @@ module FastFermionSampling
 using Random
 using StatsBase
 using LinearAlgebra
+using BitBasis
 
 export FFS, AHmodel, LatticeRectangular, getHmat
-export Periodic, Open
+export Periodic, Open, getxprime
 
 include("Lattices.jl")
 include("Orbitals.jl")

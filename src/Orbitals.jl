@@ -22,21 +22,22 @@ U_up: Matrix
 U_down: Matrix
     Unitary matrix for down spins
 """
-struct AHmodel <: AbstractOrbitals
+struct AHmodel{B} <: AbstractOrbitals
+    lattice::LatticeRectangular{B}
     t::Float64
     W::Float64
     U::Float64
     N_up::Int
     N_down::Int
     omega::Vector{Float64}
-    U_up::Matrix
-    U_down::Matrix
+    U_up::Matrix{ComplexF64}
+    U_down::Matrix{ComplexF64}
 end
 
 """
 Get the non-interacting Anderson model Hamiltonian Matrix to construct HF states
 """
-function getHmat(lattice::LatticeRectangular, t::Float64, W::Float64, omega::Vector{Float64}, N_up::Int, N_down::Int)
+function getHmat(lattice::LatticeRectangular{B}, t::Float64, omega::Vector{Float64}, N_up::Int, N_down::Int) where {B}
     ns = lattice.ns
     N = N_up + N_down
     @assert ns / N == 1 "Should be hall-filling"
@@ -55,15 +56,54 @@ end
 """
 generate Anderson-Hubbard model and get the sampling ensemble
 """
-function AHmodel(lattice::LatticeRectangular, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int)
+function AHmodel(lattice::LatticeRectangular{B}, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
-    H_mat = getHmat(lattice, t, W, omega, N_up, N_down)
+    H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
     sorted_indices = sortperm(vals)
     U_up = vecs[:, sorted_indices[1:N_up]]
     U_down = vecs[:, sorted_indices[1:N_down]]
-    return AHmodel(t, W, U, N_up, N_down, omega, U_up, U_down)
+    return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
+end
 
+"""
+return |x'> = H|x> where H = -t ∑_<i,j> c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i
+"""
+function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
+    @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 x $(length(orb.omega))), got: $N"
+    L = length(x) ÷ 2  # Int division
+    xprime = Dict{typeof(x),Float64}()
+    # consider the spin up case
+    @inbounds for i in 1:L
+        if readbit(x, i) == 1
+            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
+            if readbit(x, i) == 1 && readbit(x, i + L) == 1 #occp[i] == 2
+                xprime[x] += orb.U # Hubbard Interaction
+            end
+            for neigh in orb.lattice.neigh[i]
+                if readbit(x, neigh) == 0
+                    _x = x
+                    _x &= ~indicator(T, i)
+                    _x |= indicator(T, neigh)
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                end
+            end
+        end
+    end
+    @inbounds for i in L+1:length(x)
+        if readbit(x, i) == 1
+            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i-L] # On-site energy
+            for neigh in orb.lattice.neigh[i-L]
+                if readbit(x, neigh) == 0
+                    _x = x
+                    _x &= ~indicator(T, i)
+                    _x |= indicator(T, neigh + L)
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                end
+            end
+        end
+    end
+    return xprime
 end
