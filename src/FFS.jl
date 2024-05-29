@@ -25,7 +25,7 @@ function FFS(u::AbstractMatrix)
         B = -U[1:i, i+1]
         n_vec = normalize([U_x \ B; 1])
     end
-    prob = abs2.(view(U, avail, 1:i) * n_vec)
+    prob = abs2.(view(U, avail, 1:N) * n_vec)
     x_new = sample(groud_set[avail], Weights(prob))
     sampled[x_new] = true
     avail[x_new] = false
