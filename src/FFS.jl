@@ -14,19 +14,20 @@ function FFS(u::AbstractMatrix)
     sampled[x_new] = true
     avail[x_new] = false
     n_vec = normalize([-U[x_new, 2] / U[x_new, 1], 1])
-    for i in 2:N
+    for i in 2:N-1
         prob = abs2.(view(U, avail, 1:i) * n_vec)
         x_new = sample(groud_set[avail], Weights(prob))
         sampled[x_new] = true
         avail[x_new] = false
-        if i == N
-            break
-        end
         # now compute next n_vec
         # I suggest not using the gaussian elimination
         U_x = U[sampled, 1:i]
         B = -U[1:i, i+1]
         n_vec = normalize([U_x \ B; 1])
     end
+    prob = abs2.(view(U, avail, 1:i) * n_vec)
+    x_new = sample(groud_set[avail], Weights(prob))
+    sampled[x_new] = true
+    avail[x_new] = false
     return sampled
 end
