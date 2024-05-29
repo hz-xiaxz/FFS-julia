@@ -1,7 +1,8 @@
-function FFS(u::AbstractMatrix, L::Int, N::Int)::Vector{Bool}
-    # U: Matrix{ComplexF64}: the sampling ensemble
-    # L: Int: the number of energy states
-    # N: Int: the number of fermions
+function FFS(u::AbstractMatrix)
+    """
+    U: Matrix{Float64}: the sampling ensemble
+    """
+    L, N = size(u)
     v = randperm(N)
     U = u[:, v]
     sampled = falses(L)
@@ -14,7 +15,7 @@ function FFS(u::AbstractMatrix, L::Int, N::Int)::Vector{Bool}
     avail[x_new] = false
     n_vec = normalize([-U[x_new, 2] / U[x_new, 1], 1])
     for i in 2:N
-        prob = abs2.(U[avail, 1:i] * n_vec)
+        prob = abs2.(view(U, avail, 1:i) * n_vec)
         x_new = sample(groud_set[avail], Weights(prob))
         sampled[x_new] = true
         avail[x_new] = false
