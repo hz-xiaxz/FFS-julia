@@ -30,6 +30,8 @@ function exact_sample(U::AbstractMatrix, L::Int, N::Int)
 end
 
 @testset "FFS" begin
+    rng = MersenneTwister(123)
+    @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
     # caculate the KL divergence between the exact sample and the FFS
     iter_time = 5000 # a reasonable time for one sampling 
     L = 10
