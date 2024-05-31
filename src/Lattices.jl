@@ -26,7 +26,7 @@ function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
     left = circshift(rectl, (-1, 0))
 
     # Store neighbor information in a nested vector
-    for i in 1:ns
+    @inbounds for i in 1:ns
         neigh[i] = [up[i], right[i], down[i], left[i]]
     end
     return LatticeRectangular{B}(nx, ny, ns, neigh)
@@ -36,7 +36,7 @@ function LatticeRectangular(nx::Int, ny::Int, B::Open)
     ns = nx * ny
     neigh = Vector{Vector{Int}}(undef, ns)
     # Loop through each site
-    for i in 1:ns
+    @inbounds for i in 1:ns
         neighbors = Int[]
 
         # Identify valid neighbors for each direction
@@ -59,6 +59,3 @@ function LatticeRectangular(nx::Int, ny::Int, B::Open)
     return LatticeRectangular{B}(nx, ny, ns, neigh)
 
 end
-
-
-

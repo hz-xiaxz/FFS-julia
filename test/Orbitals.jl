@@ -16,19 +16,24 @@ end
     x = LongBitStr([true, true, false, false, false, true, true, false])
     xprime = getxprime(orb, x)
     occp = x[1:4] + x[5:end]
-    @test length(keys(xprime)) == 5
+    @test length(keys(xprime)) == 7 
     @test xprime[x] ≈ sum(occp .* orb.omega) + 1.0
-    @test xprime[LongBitStr([false, true, true, false, false, true, true, false])]  == -2
-    @test xprime[LongBitStr([true, false, false, true, false, true, true, false])]  == -2
-    @test xprime[LongBitStr([true, true, false, false, false, true, false, true])]  == -2
-    @test xprime[LongBitStr([true, true, false, false, false, false, true, true])]  == -2
+    @test xprime[LongBitStr([false, true, true, false, false, true, true, false])] == -2
+    @test xprime[LongBitStr([true, false, false, true, false, true, true, false])] == -2
+    @test xprime[LongBitStr([true, true, false, false, false, true, false, true])] == -2
+    @test xprime[LongBitStr([true, true, false, false, false, false, true, true])] == -2
+    @test xprime[LongBitStr([true, true, false, false, true, true, false, false])] == -2
+    @test xprime[LongBitStr([true, true, false, false, true, false, true, false])] == -2
+    for conf in keys(xprime)
+        @test sum([conf...]) == 4
+    end
 end
 
 using BenchmarkTools
 function bm(n::Int)
     @assert n % 2 == 0
     lat = LatticeRectangular(n, n, Periodic())
-    orb = AHmodel(lat, 1.0, 1.0, 1.0, n^2÷2, n^2÷2)
+    orb = AHmodel(lat, 1.0, 1.0, 1.0, n^2 ÷ 2, n^2 ÷ 2)
     #x = rand(Bool, 2*n^2)
     x = LongBitStr(rand(0:1, 2n^2))
     @btime getxprime($orb, $x)
