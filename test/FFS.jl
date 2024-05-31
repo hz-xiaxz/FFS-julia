@@ -30,6 +30,8 @@ function exact_sample(U::AbstractMatrix, L::Int, N::Int)
 end
 
 @testset "FFS" begin
+    rng = MersenneTwister(123)
+    @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
     # caculate the KL divergence between the exact sample and the FFS
     iter_time = 5000 # a reasonable time for one sampling 
     L = 10
@@ -37,14 +39,14 @@ end
     U = randn(Float64, L, N)
     events, p = exact_sample(U, L, N)
     sampled = Dict{Int,Float64}()
-    for (i,ev) in enumerate(events)
+    for (i, ev) in enumerate(events)
         sampled[evalpoly(2, reverse(ev))] = 1e-8# for KL-div not blowing up
     end
     for i in 1:iter_time
-        sampled[evalpoly(2, reverse(FFS(U, L, N)))] += 1
+        sampled[evalpoly(2, reverse(FFS(U)))] += 1
     end
     q = zeros(Float64, length(keys(sampled)))
-    for (i,key) in enumerate(sort(collect(keys(sampled))))
+    for (i, key) in enumerate(sort(collect(keys(sampled))))
         q[i] = sampled[key]
     end
     normalize!(q)
