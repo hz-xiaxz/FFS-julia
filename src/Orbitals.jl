@@ -30,14 +30,20 @@ struct AHmodel{B} <: AbstractOrbitals
     N_up::Int
     N_down::Int
     omega::Vector{Float64}
-    U_up::Matrix{ComplexF64}
-    U_down::Matrix{ComplexF64}
+    U_up::Matrix{Float64}
+    U_down::Matrix{Float64}
 end
 
 """
 Get the non-interacting Anderson model Hamiltonian Matrix to construct HF states
 """
-function getHmat(lattice::LatticeRectangular{B}, t::Float64, omega::Vector{Float64}, N_up::Int, N_down::Int) where {B}
+function getHmat(
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    omega::Vector{Float64},
+    N_up::Int,
+    N_down::Int,
+) where {B}
     ns = lattice.ns
     N = N_up + N_down
     @assert ns / N == 1 "Should be hall-filling"
@@ -56,7 +62,14 @@ end
 """
 generate Anderson-Hubbard model and get the sampling ensemble
 """
-function AHmodel(lattice::LatticeRectangular{B}, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int) where {B}
+function AHmodel(
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    W::Float64,
+    U::Float64,
+    N_up::Int,
+    N_down::Int,
+) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
@@ -76,7 +89,7 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
     L = length(x) ÷ 2  # Int division
     xprime = Dict{typeof(x),Float64}()
     # consider the spin up case
-    @inbounds for i in 1:L
+    @inbounds for i = 1:L
         if readbit(x, i) == 1
             xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
             if readbit(x, i) == 1 && readbit(x, i + L) == 1 #occp[i] == 2
@@ -92,11 +105,11 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
             end
         end
     end
-    @inbounds for i in L+1:length(x)
+    @inbounds for i = L+1:length(x)
         if readbit(x, i) == 1
             xprime[x] = get!(xprime, x, 0.0) + orb.omega[i-L] # On-site energy
             for neigh in orb.lattice.neigh[i-L]
-                if readbit(x, neigh) == 0
+                if readbit(x, neigh + L) == 0
                     _x = x
                     _x &= ~indicator(T, i)
                     _x |= indicator(T, neigh + L)
