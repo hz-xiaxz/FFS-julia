@@ -8,6 +8,7 @@ using BitBasis
 
 export FFS, AHmodel, LatticeRectangular, getHmat
 export Periodic, Open, getxprime
+export Gutzwiller
 
 include("Lattices.jl")
 include("Orbitals.jl")
