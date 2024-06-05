@@ -1,22 +1,32 @@
 abstract type AbstractAnsatz end
 struct Gutzwiller <: AbstractAnsatz
-    conf_up::BitVector
-    conf_down::BitVector
     g::Float64
-    G::Float64 # may have precision problem!
     Og::Float64
     OL::Float64
 end
 
 """
 Fast Gutzwiller Factor update technique from Becca and Sorella 2017
-This is not needed for one-g Gutzwiller Factor
+Should input whole conf
 """
-function fast_G_update(newconf::BitStr{N,T}, oldconf::BitStr{N,T}, g::Float64, n_mean::Float64) where {N,T}
-    L = length(newconf) ÷ 2
-    diff = newconf - oldconf
-    @assert sum(abs.(diff)) == 2 "Only one electron move"
-    ratio = exp(-g / 2 * sum(@. diff * ((1 - n_mean)^2) - n_mean^2))
+function fast_G_update(newwholeconf::BitStr{N,T}, oldwholeconf::BitStr{N,T}, g::Float64, n_mean::Float64) where {N,T}
+    # search for the electron that moves
+    diff = newwholeconf .⊻ oldwholeconf # this is more efficient
+    exponent = 0
+    L = N ÷ 2
+    flag = 0
+    @inbounds for i in 1:L
+        if readbit(diff, i) == 1
+            occup_new = Float64(readbit(newwholeconf, i) + readbit(newwholeconf, i + L))
+            occup_old = Float64(readbit(oldwholeconf, i) + readbit(oldwholeconf, i + L))
+            exponent += (occup_new - n_mean)^2 - (occup_old - n_mean)^2
+            flag += 1
+        end
+        if flag == 2
+            break
+        end
+    end
+    ratio = exp(-g / 2 * exponent)
     return ratio
 end
 
@@ -30,7 +40,7 @@ function fast_update(
     oldconf::BitStr{N,T}
 ) where {N,T}
     diff = newconf .⊻ oldconf
-    Rl = -1
+    Rl = -1 # if not found should return error
     k = -1
     flag = 0
     @inbounds for i in 1:N
@@ -56,30 +66,30 @@ end
 """
 The observable OL = <x|H|Ψ_G>/<x|Ψ_G> 
 """
-function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector)
+function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float64)
     conf = LongBitStr(vcat(conf_up, conf_down))
     L = length(conf) ÷ 2
     OL = 0.0
+    n_mean = (orb.N_up + orb.N_down) / orb.lattice.ns
     U_upinvs = inv(orb.U_up[conf_up, :]) # might be optimized by column slicing
     U_downinvs = inv(orb.U_down[conf_down, :])
     xprime = getxprime(orb, conf)
-    @inbounds for confstr in keys(xprime)
-        coff = xprime[confstr]
+    @inbounds for (confstr, coff) in pairs(xprime)
         if confstr == conf
             OL += coff
         elseif confstr[1:L] == conf_up
             OL +=
                 coff *
-                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down))
+                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         elseif confstr[L+1:end] == conf_down
             OL +=
                 coff *
-                fast_update(orb.U_up, U_upinvs, LongBitStr(confstr[1:L]), LongBitStr(conf_up))
+                fast_update(orb.U_up, U_upinvs, LongBitStr(confstr[1:L]), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
         else
             OL +=
                 coff *
                 fast_update(orb.U_up, U_upinvs, LongBitStr(confstr[1:L]), LongBitStr(conf_up)) *
-                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down))
+                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         end
 
     end
@@ -99,7 +109,6 @@ function Gutzwiller(
     occupation = conf_up + conf_down
     n_mean = (orbitals.N_up + orbitals.N_down) / orbitals.lattice.ns
     Og = -1 / 2 * sum(@. (occupation - n_mean)^2)
-    G = exp(g * Og)
-    OL = getOL(orbitals, conf_up, conf_down)
-    return Gutzwiller(conf_up, conf_down, g, G, Og, OL)
+    OL = getOL(orbitals, conf_up, conf_down, g)
+    return Gutzwiller(g, Og, OL)
 end
