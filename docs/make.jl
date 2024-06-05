@@ -8,7 +8,7 @@ makedocs(;
     authors="XuanzheXia",
     sitename="FastFermionSampling.jl",
     format=Documenter.HTML(;
-        canonical="https://XuanzheXia.github.io/FastFermionSampling.jl",
+        canonical="https://hz-xiaxz.github.io/FastFermionSampling.jl",
         edit_link="main",
         assets=String[],
     ),
