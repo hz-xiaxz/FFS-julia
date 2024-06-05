@@ -22,7 +22,7 @@ U_up: Matrix
 U_down: Matrix
     Unitary matrix for down spins
 """
-struct AHmodel{B} <: AbstractOrbitals
+struct AHmodel{B} <: AbstractOrbitals where {B}
     lattice::LatticeRectangular{B}
     t::Float64
     W::Float64
@@ -71,6 +71,7 @@ function AHmodel(
     N_down::Int,
 ) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
+    # omega = ones(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
@@ -92,7 +93,7 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
     @inbounds for i = 1:L
         if readbit(x, i) == 1
             xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
-            if readbit(x, i) == 1 && readbit(x, i + L) == 1 #occp[i] == 2
+            if readbit(x, i) == 1 && readbit(x, i + L) == 1 # occp[i] == 2
                 xprime[x] += orb.U # Hubbard Interaction
             end
             for neigh in orb.lattice.neigh[i]
