@@ -6,9 +6,9 @@ DocMeta.setdocmeta!(FastFermionSampling, :DocTestSetup, :(using FastFermionSampl
 makedocs(;
     modules=[FastFermionSampling],
     authors="XuanzheXia",
-    sitename="FastFermionSampling.jl",
+    sitename="FFS-julia",
     format=Documenter.HTML(;
-        canonical="https://XuanzheXia.github.io/FastFermionSampling.jl",
+        canonical="https://hz-xiaxz.github.io/FFS-julia",
         edit_link="main",
         assets=String[],
     ),
@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/XuanzheXia/FastFermionSampling.jl",
+    repo="github.com/hz-xiaxz/FFS-julia",
     devbranch="main",
 )
