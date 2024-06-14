@@ -18,6 +18,7 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/hz-xiaxz/FFS-julia",
+    repo="github.com/hz-xiaxz/FFS-julia.git",
     devbranch="main",
+    push_review=true,
 )
