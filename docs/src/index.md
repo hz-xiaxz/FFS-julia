@@ -4,7 +4,7 @@ CurrentModule = FastFermionSampling
 
 # FastFermionSampling
 
-Documentation for [FastFermionSampling](https://github.com/XuanzheXia/FastFermionSampling.jl).
+Documentation for [FastFermionSampling](https://github.com/hz-xiaxz/FFS-julia).
 
 ```@index
 ```
