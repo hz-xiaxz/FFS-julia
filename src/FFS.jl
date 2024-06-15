@@ -1,9 +1,9 @@
 """
+    FFS([rng=default_rng()], U::AbstractMatrix)
+    
 Employing Fast Fermion Sampling Algorithm to sample free Fermions
 
-FFS([rng=default_rng()], U::AbstractMatrix)
-
-U: the sampling ensemble, a matrix of size L x N, where L is the number of energy states and N is the number of Fermions 
+`U``: the sampling ensemble, a matrix of size `L` x `N`, where `L` is the number of energy states and `N` is the number of Fermions 
 """
 function FFS(r::AbstractRNG, u::AbstractMatrix)
     # TODO: change to BitStr 

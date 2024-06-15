@@ -7,6 +7,7 @@ end
 
 """
 Fast Gutzwiller Factor update technique from Becca and Sorella 2017
+
 Should input whole conf
 """
 function fast_G_update(newwholeconf::BitStr{N,T}, oldwholeconf::BitStr{N,T}, g::Float64, n_mean::Float64) where {N,T}
@@ -63,8 +64,8 @@ function fast_update(
     return ratio
 end
 
-"""
-The observable OL = <x|H|Ψ_G>/<x|Ψ_G> 
+@doc raw"""
+The observable ``O_L = \frac{<x|H|\psi_G>}{<x|\psi_G>}``
 """
 function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float64)
     conf = LongBitStr(vcat(conf_up, conf_down))
@@ -97,8 +98,8 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
 end
 
 
-"""
-add Gutzwiller Ansatz where G  = exp(-g/2 ∑_i (n_i - n_mean)^2), Ψ_G = G Ψ_0
+@doc raw"""
+add Gutzwiller Ansatz where ``G  = \exp(-g/2 \sum_i (n_i - n_{mean})^2)``, ``\psi_G = G \psi_0``
 """
 function Gutzwiller(
     orbitals::AHmodel{B},
