@@ -3,24 +3,16 @@ abstract type AbstractOrbitals end
 """
 Anderson-Hubbard Model
 ----------------------
-lattice: LatticeRectangular{B}
-    The lattice structure   
-t: Float64
-    Hopping parameter
-W: Float64
-    Disorder strength
-U: Float64
-    On-site interaction strength
-Nup: Int
-    Number of up spins
-Ndown: Int
-    Number of down spins
-omega: Vector{Float64}
-    Random on-site energies
-U_up: Matrix
-    Unitary matrix for up spins
-U_down: Matrix
-    Unitary matrix for down spins
+
+* `lattice` : `LatticeRectangular{B}` The lattice structure   
+* `t`: `Float64` Hopping parameter
+* `W` : `Float64` Disorder strength, on site energy is sampled from `N(0, W/2)`
+* `U` : `Float64` On-site interaction strength
+* `Nup` : `Int` Number of up spins
+* `Ndown` : `Int` Number of down spins
+* `omega` : `Vector{Float64}` Random on-site energies
+* `U_up` : `Matrix{Float64}` Unitary matrix for up spins
+* `U_down` : `Matrix{Float64}` Unitary matrix for down spins
 """
 struct AHmodel{B} <: AbstractOrbitals where {B}
     lattice::LatticeRectangular{B}
@@ -35,7 +27,9 @@ struct AHmodel{B} <: AbstractOrbitals where {B}
 end
 
 """
-Get the non-interacting Anderson model Hamiltonian Matrix to construct HF states
+    getHmat(lattice::LatticeRectangular{B}, t::Float64, omega::Vector{Float64}, N_up::Int, N_down::Int)'
+
+Get the non-interacting Anderson model Hamiltonian Matrix to construct Slater Determinants 
 """
 function getHmat(
     lattice::LatticeRectangular{B},
@@ -60,7 +54,9 @@ end
 
 
 """
-generate Anderson-Hubbard model and get the sampling ensemble
+    AHmodel(lattice::LatticeRectangular{B}, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int)
+
+Generate Anderson-Hubbard model and get the sampling ensemble
 """
 function AHmodel(
     lattice::LatticeRectangular{B},
@@ -83,7 +79,9 @@ function AHmodel(
 end
 
 """
-return |x'> = H|x> where H = -t ∑_<i,j> c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i
+    getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
+
+return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i``
 """
 function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
     @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 x $(length(orb.omega))), got: $N"
