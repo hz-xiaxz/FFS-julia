@@ -6,10 +6,12 @@ using StatsBase
 using LinearAlgebra
 using BitBasis
 using Carlo
+using HDF5
 
 export FFS, AHmodel, LatticeRectangular, getHmat, MC
 export Periodic, Open, getxprime
 export Gutzwiller
+export MC
 
 include("Lattices.jl")
 include("Orbitals.jl")

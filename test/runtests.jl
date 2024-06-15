@@ -6,5 +6,4 @@ using Test
     include("Lattice.jl")
     include("Orbitals.jl")
     include("Ansatz.jl")
-    include("MonteCarlo.jl")
 end
