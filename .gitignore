@@ -9,3 +9,6 @@ FastFermionSampling.code-workspace
 examples/Manifest.toml
 .vscode/
 test/Manifest.toml
+jobs/job.data
+job.results.json
+data/
