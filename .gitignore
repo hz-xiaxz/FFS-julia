@@ -11,3 +11,4 @@ examples/Manifest.toml
 test/Manifest.toml
 jobs/job.data
 job.results.json
+data/

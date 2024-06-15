@@ -3,10 +3,11 @@
 using Carlo
 using Carlo.JobTools
 using FastFermionSampling
+using Dates
 
 tm = TaskMaker()
 tm.thermalization = 0
-tm.sweeps = 1000
+tm.sweeps = 100000
 tm.binsize = 1
 tm.t = 1.0
 tm.W = 1.0
@@ -15,7 +16,7 @@ tm.N_up = 2
 tm.N_down = 2
 tm.nx = 2
 tm.ny = 2
-tm.B = "Periodic" 
+tm.B = "Periodic"
 
 params = Dict(
     :t => 1.0,
@@ -38,9 +39,10 @@ end
 model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
 conf = vcat(FFS(model.U_up), FFS(model.U_down))
 task(tm)
-
+dir = @__DIR__
+savepath = dir * "/../data/" * Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
 job = JobInfo(
-    @__FILE__,
+    savepath,
     FastFermionSampling.MC;
     tasks=make_tasks(tm),
     checkpoint_time="30:00",
