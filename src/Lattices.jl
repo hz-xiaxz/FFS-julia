@@ -12,6 +12,13 @@ end
 """
     LatticeRectangular(nx::Int, ny::Int, B::Periodic)
     LatticeRectangular(nx::Int, ny::Int, B::Open)
+
+Generate a rectangular lattice with periodic or open boundary conditions
+
+* `nx` : number of sites in x-direction
+* `ny` : number of sites in y-direction
+* `B` : boundary condition, either `Periodic` or `Open`
+
 """
 function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
     ns = nx * ny
