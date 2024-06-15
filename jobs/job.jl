@@ -7,38 +7,30 @@ using Dates
 
 tm = TaskMaker()
 tm.thermalization = 0
-tm.sweeps = 100000
+tm.sweeps = 10000
 tm.binsize = 1
 tm.t = 1.0
 tm.W = 1.0
 tm.U = 1.0
-tm.N_up = 2
-tm.N_down = 2
-tm.nx = 2
-tm.ny = 2
+tm.N_up = 20^2 ÷ 2
+tm.N_down = 20^2 ÷ 2
+tm.nx = 20
+tm.ny = 20
 tm.B = "Periodic"
 
-params = Dict(
-    :t => 1.0,
-    :W => 1.0,
-    :U => 1.0,
-    :N_up => 2,
-    :N_down => 2,
-    :nx => 2,
-    :ny => 2,
-    :B => "Periodic"
-)
-if params[:B] == "Periodic"
-    lat = LatticeRectangular(params[:nx], params[:ny], Periodic())
-elseif params[:B] == "Open"
-    lat = LatticeRectangular(params[:nx], params[:ny], Open())
+if tm.B == "Periodic"
+    lat = LatticeRectangular(tm.nx, tm.ny, Periodic())
+elseif tm.B == "Open"
+    lat = LatticeRectangular(tm.nx, tm.ny, Open())
 else
     throw(ArgumentError("Boundary condition not recognized"))
 end
 
-model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
+model = AHmodel(lat, tm.t, tm.W, tm.U, tm.N_up, tm.N_down)
 conf = vcat(FFS(model.U_up), FFS(model.U_down))
+
 task(tm)
+
 dir = @__DIR__
 savepath = dir * "/../data/" * Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
 job = JobInfo(
