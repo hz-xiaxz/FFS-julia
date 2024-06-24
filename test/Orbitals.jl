@@ -16,7 +16,7 @@ end
     x = LongBitStr([true, true, false, false, false, true, true, false])
     xprime = getxprime(orb, x)
     occp = x[1:4] + x[5:end]
-    @test length(keys(xprime)) == 7 
+    @test length(keys(xprime)) == 7
     @test xprime[x] ≈ sum(occp .* orb.omega) + 1.0
     @test xprime[LongBitStr([false, true, true, false, false, true, true, false])] == -2
     @test xprime[LongBitStr([true, false, false, true, false, true, true, false])] == -2
@@ -27,6 +27,15 @@ end
     for conf in keys(xprime)
         @test sum([conf...]) == 4
     end
+end
+
+@testset "fixedAHmodel" begin
+    lat = LatticeRectangular(2, 2, Periodic())
+    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
+    orb.omega .= 1.0 / 2
+    @test model.N_up == 2
+    @test model.N_down == 2
+    @test length(model.omega) == 4
 end
 
 using BenchmarkTools
