@@ -33,9 +33,9 @@ end
     lat = LatticeRectangular(2, 2, Periodic())
     orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
     orb.omega .= 1.0 / 2
-    @test model.N_up == 2
-    @test model.N_down == 2
-    @test length(model.omega) == 4
+    @test orb.N_up == 2
+    @test orb.N_down == 2
+    @test length(orb.omega) == 4
 end
 
 using BenchmarkTools
