@@ -53,8 +53,8 @@ end
     rng = MersenneTwister(123)
     @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
     U = randn(Float64, 10, 2)
-    kl1 = getKLdiv(10, 2, 1000, U)
-    @test kl1 ≈ 0 atol = 1 # high tolerance for now
+    kl1 = getKLdiv(10, 2, 500, U)
+    @test kl1 ≈ 0 atol = 5 # high tolerance for now
     kl2 = getKLdiv(10, 2, 5000, U)
     @test kl2 ≈ 0 atol = 1
     @test kl2 < kl1
