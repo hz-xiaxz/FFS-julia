@@ -67,7 +67,6 @@ function AHmodel(
     N_down::Int,
 ) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
-    # omega = ones(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
@@ -78,10 +77,31 @@ function AHmodel(
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
 end
 
+# this function is for debugging
+function fixedAHmodel(
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    W::Float64,
+    U::Float64,
+    N_up::Int,
+    N_down::Int,
+) where {B}
+    omega = ones(Float64, lattice.ns) * W / 2
+    H_mat = getHmat(lattice, t, omega, N_up, N_down)
+    # get sampling ensemble U_up and U_down
+    vals, vecs = eigen(H_mat)
+    # select N lowest eigenvectors as the sampling ensemble
+    # eigen function may have numerical instability problem, see issue(#21)
+    sorted_indices = sortperm(vals)
+    U_up = vecs[:, sorted_indices[1:N_up]]
+    U_down = vecs[:, sorted_indices[1:N_down]]
+    return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
+end
+
 """
     getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
 
-return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_i↓ n_i↑ + ∑_i ω_i n_i``
+return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
 """
 function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
     @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 x $(length(orb.omega))), got: $N"
