@@ -26,9 +26,30 @@ end
     new_conf_down = BitVector([1, 0, 0, 1])
     new_conf_upstr = LongBitStr([0, 1, 1, 0])
     new_conf_downstr = LongBitStr([1, 0, 0, 1])
-    # TODO: Add LongBitStr test 
+
     @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
     @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
+
+    # LongBitStr testset
+    conf_up = BitVector([1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0])
+    conf_down = BitVector([0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1])
+    conf_upstr = LongBitStr(conf_up)
+    conf_downstr = LongBitStr(conf_down)
+    lat = LatticeRectangular(4, 4, Periodic())
+    orb = AHmodel(lat, 1.0, 1.0, 1.0, 8, 8)
+
+    U_upinvs = inv(orb.U_up[conf_up, :])
+    U_downinvs = inv(orb.U_down[conf_down, :])
+    conf_upstr = LongBitStr(conf_up)
+    conf_downstr = LongBitStr(conf_down)
+    new_conf_up = BitVector([1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0]) # hop from 4 to 8
+    new_conf_down = BitVector([1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]) # hop from 5 to 1
+    new_conf_upstr = LongBitStr(new_conf_up)
+    new_conf_downstr = LongBitStr(new_conf_down)
+
+    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
+
 end
 
 @testset "fast_G_update" begin
