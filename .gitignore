@@ -13,3 +13,4 @@ jobs/job.data
 job.results.json
 data/
 Manifest-v1.11.toml
+jobs/
