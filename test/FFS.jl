@@ -29,14 +29,8 @@ function exact_sample(U::AbstractMatrix, L::Int, N::Int)
 
 end
 
-@testset "FFS" begin
-    rng = MersenneTwister(123)
-    @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
+function getKLdiv(L::Int, N::Int, iter_time::Int, U::Matrix{Float64})
     # caculate the KL divergence between the exact sample and the FFS
-    iter_time = 5000 # a reasonable time for one sampling 
-    L = 10
-    N = 2 # tested for small exact system
-    U = randn(Float64, L, N)
     events, p = exact_sample(U, L, N)
     sampled = Dict{Int,Float64}()
     for (i, ev) in enumerate(events)
@@ -52,5 +46,16 @@ end
     normalize!(q)
     # KL divergence ∑ p(x) log(p(x)/q(x))
     kl = sum(p .* log.(p ./ q))
-    @test kl ≈ 0 atol = 1 # high tolerance for now
+    return kl
+end
+
+@testset "FFS" begin
+    rng = MersenneTwister(123)
+    @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
+    U = randn(Float64, 10, 2)
+    kl1 = getKLdiv(10, 2, 500, U)
+    @test kl1 ≈ 0 atol = 5 # high tolerance for now
+    kl2 = getKLdiv(10, 2, 5000, U)
+    @test kl2 ≈ 0 atol = 1
+    @test kl2 < kl1
 end
