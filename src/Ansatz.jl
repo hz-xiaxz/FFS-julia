@@ -36,9 +36,10 @@ Fast computing technique from Becca and Sorella 2017
 function fast_update(
     U::AbstractMatrix,
     Uinvs::AbstractMatrix,
-    newconf::BitStr{N,T},
+    newconf::DitStr{D,N1,T},
     oldconf::BitStr{N,T}
-) where {N,T}
+) where {D,N1,N,T}
+    @assert length(newconf) == N "The length of the new configuration should be the same as the old configuration, got: $(length(newconf))(old) and $N(new)"
     diff = newconf .⊻ oldconf
     Rl = -1 # if not found should return error
     k = -1
@@ -80,16 +81,16 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
         elseif confstr[1:L] == conf_up
             OL +=
                 coff *
-                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_down, U_downinvs, DitStr(SubDitStr(confstr, L + 1, 2 * L)), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         elseif confstr[L+1:end] == conf_down
             OL +=
                 coff *
-                fast_update(orb.U_up, U_upinvs, LongBitStr(confstr[1:L]), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_up, U_upinvs, DitStr(SubDitStr(confstr, 1, L)), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
         else
             OL +=
                 coff *
-                fast_update(orb.U_up, U_upinvs, LongBitStr(confstr[1:L]), LongBitStr(conf_up)) *
-                fast_update(orb.U_down, U_downinvs, LongBitStr(confstr[L+1:end]), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_up, U_upinvs, DitStr(SubDitStr(confstr, 1, L)), LongBitStr(conf_up)) *
+                fast_update(orb.U_down, U_downinvs, DitStr(SubDitStr(confstr, L + 1, 2 * L)), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         end
 
     end
