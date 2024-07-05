@@ -22,12 +22,11 @@ Should input whole configuration
 """
 function fast_G_update(newwholeconf::BitStr{N,T}, oldwholeconf::BitStr{N,T}, g::Float64, n_mean::Float64) where {N,T}
     # search for the electron that moves
-    diff = newwholeconf .⊻ oldwholeconf # this is more efficient
     exponent = 0
     L = N ÷ 2
     flag = 0
     @inbounds for i in 1:L
-        if readbit(diff, i) == 1
+        if readbit(newwholeconf, i) ⊻ readbit(oldwholeconf, i) == 1
             occup_new = Float64(readbit(newwholeconf, i) + readbit(newwholeconf, i + L))
             occup_old = Float64(readbit(oldwholeconf, i) + readbit(oldwholeconf, i + L))
             exponent += (occup_new - n_mean)^2 - (occup_old - n_mean)^2
@@ -49,24 +48,21 @@ Fast computing technique from Becca and Sorella 2017
 function fast_update(
     U::AbstractMatrix,
     Uinvs::AbstractMatrix,
-    newconf::DitStr{D,N1,T},
+    newconf::Union{SubDitStr{D,N1,T1},DitStr{D,N1,T1}},
     oldconf::BitStr{N,T}
-) where {D,N1,N,T}
+) where {D,N1,N,T,T1}
     @assert length(newconf) == N "The length of the new configuration should be the same as the old configuration, got: $(length(newconf))(old) and $N(new)"
-    diff = newconf .⊻ oldconf
     Rl = -1 # if not found should return error
     k = -1
     flag = 0
     @inbounds for i in 1:N
-        if readbit(diff, i) == 1
-            if readbit(oldconf, i) == 1
-                Rl = i # the old position of the l-th electron
-                flag += 1
-            end
-            if readbit(newconf, i) == 1
-                k = i # the new position of the l-th electron, K = R_l'
-                flag += 1
-            end
+        if getindex(oldconf, i) == 1 && getindex(newconf, i) == 0 
+            Rl = i # the old position of the l-th electron
+            flag += 1
+        end
+        if getindex(newconf, i) == 1 && getindex(oldconf, i) == 0
+            k = i # the new position of the l-th electron, K = R_l'
+            flag += 1
         end
         if flag == 2
             break
@@ -96,16 +92,16 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
         elseif confstr[1:L] == conf_up
             OL +=
                 coff *
-                fast_update(orb.U_down, U_downinvs, DitStr(SubDitStr(confstr, L + 1, 2 * L)), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         elseif confstr[L+1:end] == conf_down
             OL +=
                 coff *
-                fast_update(orb.U_up, U_upinvs, DitStr(SubDitStr(confstr, 1, L)), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
         else
             OL +=
                 coff *
-                fast_update(orb.U_up, U_upinvs, DitStr(SubDitStr(confstr, 1, L)), LongBitStr(conf_up)) *
-                fast_update(orb.U_down, U_downinvs, DitStr(SubDitStr(confstr, L + 1, 2 * L)), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+                fast_update(orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) *
+                fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         end
 
     end
