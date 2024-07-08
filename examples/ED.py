@@ -1,12 +1,21 @@
 import numpy as np  # general math functions
 from quspin.basis import spinful_fermion_basis_general  # spin basis constructor
 from quspin.operators import hamiltonian  # operators
+import time
 
 """
 ED for 2d rectangular_lattice (half filled case)
 """
+def cost_time(func):
+    def fun(*args, **kwargs):
+        t = time.perf_counter()
+        result = func(*args, **kwargs)
+        print(f'func {func.__name__} cost time:{time.perf_counter() - t:.8f} s')
+        return result
 
+    return fun
 
+@cost_time
 def ED(Lx, Ly, J, U, W, fixed):
     ###### define model parameters ######
     N_2d = Lx * Ly  # number of sites for spin 1
@@ -60,4 +69,4 @@ def ED(Lx, Ly, J, U, W, fixed):
 
 
 if __name__ == "__main__":
-    print(ED(2, 2, 1, 1, 1, True))
+    print(ED(3, 2, 1, 1, 1, True))

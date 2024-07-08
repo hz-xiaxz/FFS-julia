@@ -1,10 +1,11 @@
 # Perform MC without Carlo.jl Framework
 using Statistics
 using FastFermionSampling
+include("ED.jl")
 
 function run(MCsteps::Int)
-    lat = LatticeRectangular(4, 4, Periodic())
-    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 8, 8)
+    lat = LatticeRectangular(2, 2, Periodic())
+    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
     sm = zeros(Float64, MCsteps)
     for i in 1:MCsteps
         conf_up = FFS(orb.U_up)
@@ -21,5 +22,6 @@ function run(MCsteps::Int)
             sm[i] = gut.OL
         end
     end
-    return mean(sm), (std(sm) / √(MCsteps - 1))
+    result_ED = doED()
+    return mean(sm), (std(sm) / √(MCsteps - 1)), result_ED
 end
