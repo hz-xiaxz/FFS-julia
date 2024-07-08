@@ -13,7 +13,7 @@ def ED(Lx, Ly, J, U, W, fixed):
     #
     eps = np.random.uniform(-W / 2, W / 2, size=N_2d)
     if fixed:
-        eps = np.ones(N_2d) * W / 2
+        eps = np.zeros(N_2d) * W / 2
 
     #
     ###### setting up user-defined BASIC symmetry transformations for 2d lattice ######
@@ -24,7 +24,7 @@ def ED(Lx, Ly, J, U, W, fixed):
     T_y = x + Lx * ((y + 1) % Ly)  # translation along y-direction
     S = -(s + 1)  # fermion spin inversion in the simple case
     N_up = N_2d // 2
-    N_down = N_2d % 2
+    N_down = N_2d - N_up
     #
     ###### setting up bases ######
     basis_2d = spinful_fermion_basis_general(
@@ -53,11 +53,11 @@ def ED(Lx, Ly, J, U, W, fixed):
     ]  # spin up-spin down interaction
     # build hamiltonian
     no_checks = dict(check_pcon=False, check_symm=False, check_herm=False)
-    H = hamiltonian(static, [], basis=basis_2d, dtype=np.float64, **no_checks)
+    H = hamiltonian(static, [], basis=basis_2d, dtype=np.float64)
     # diagonalise H
-    eigenvalues, eigenvectors = H.eigh()
-    return eigenvalues
+    E=H.eigvalsh()
+    return E 
 
 
 if __name__ == "__main__":
-    print(ED(4, 4, 1, 1, 1, True))
+    print(ED(2, 2, 1, 1, 1, True))
