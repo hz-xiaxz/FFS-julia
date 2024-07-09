@@ -4,8 +4,8 @@ using FastFermionSampling
 include("ED.jl")
 
 function run(MCsteps::Int)
-    lat = LatticeRectangular(2, 2, Periodic())
-    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
+    lat = LatticeRectangular(3, 2, Periodic())
+    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 3, 3)
     sm = zeros(Float64, MCsteps)
     for i in 1:MCsteps
         conf_up = FFS(orb.U_up)
@@ -22,6 +22,6 @@ function run(MCsteps::Int)
             sm[i] = gut.OL
         end
     end
-    result_ED = doED()
+    result_ED = doED(3,2,1.0,1.0)
     return mean(sm), (std(sm) / √(MCsteps - 1)), result_ED
 end
