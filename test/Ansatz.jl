@@ -49,7 +49,8 @@ end
 
     @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
     @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
-
+    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, SubDitStr(new_conf_upstr, 1, 16), conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, SubDitStr(new_conf_downstr, 1, 16), conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
 end
 
 @testset "fast_G_update" begin
