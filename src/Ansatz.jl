@@ -83,8 +83,8 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
     L = length(conf) ÷ 2
     OL = 0.0
     n_mean = (orb.N_up + orb.N_down) / orb.lattice.ns
-    U_upinvs = inv(orb.U_up[conf_up, :]) # might be optimized by column slicing
-    U_downinvs = inv(orb.U_down[conf_down, :])
+    U_upinvs = orb.U_up[conf_up, :] \ I # do invs more efficiently
+    U_downinvs = orb.U_down[conf_down, :] \ I
     xprime = getxprime(orb, conf)
     @inbounds for (confstr, coff) in pairs(xprime)
         if confstr == conf
