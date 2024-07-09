@@ -18,8 +18,12 @@ end
     conf_up = BitVector([1, 0, 1, 0])
     conf_down = BitVector([0, 1, 0, 1])
     orb = AHmodel(LatticeRectangular(2, 2, Periodic()), 1.0, 1.0, 1.0, 2, 2)
-    U_upinvs = inv(orb.U_up[conf_up, :])
-    U_downinvs = inv(orb.U_down[conf_down, :])
+
+    U_upinvs = orb.U_up[conf_up, :] \ I
+    U_downinvs = orb.U_down[conf_down, :] \ I
+    @test inv(orb.U_up[conf_up, :]) ≈ orb.U_up[conf_up, :] \ I
+    @test inv(orb.U_down[conf_down, :]) ≈ orb.U_down[conf_down, :] \ I
+
     conf_upstr = LongBitStr(conf_up)
     conf_downstr = LongBitStr(conf_down)
     new_conf_up = BitVector([0, 1, 1, 0])
