@@ -2,9 +2,9 @@ using QuantumLattices
 using ExactDiagonalization
 using LinearAlgebra: eigen
 
-function doED(Lx::Int, Ly::Int,t::Float64,U::Float64)
+function doED(Lx::Int, Ly::Int, t::Float64, U::Float64)
     # define the unitcell of the square lattice
-    unitcell = Lattice([0.0, 0.0]; name = :Square, vectors = [[1.0, 0.0], [0.0, 1.0]])
+    unitcell = Lattice([0.0, 0.0]; name=:Square, vectors=[[1.0, 0.0], [0.0, 1.0]])
 
     # define a finite 3×4 cluster of the square lattice with open boundary condition
     boundary = ntuple(i -> 'P', 2)
@@ -25,7 +25,7 @@ function doED(Lx::Int, Ly::Int,t::Float64,U::Float64)
     ed = ED(lattice, hilbert, (t, U), quantumnumber)
 
     # find the ground state and its energy
-    eigensystem = eigen(ed; nev = 1)
+    eigensystem = eigen(ed; nev=1)
 
     # Ground state energy should be -4.913259209075605
     eigensystem.values

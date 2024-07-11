@@ -13,7 +13,7 @@ function run(MCsteps::Int)
         conf_down = FFS(orb.U_down)
         gut = Gutzwiller(orb, conf_up, conf_down, 1.0)
         # HACK!!!
-        if i > 1 
+        if i > 1
             if abs(gut.OL) > abs(10 * mean(sm[1:i]))
                 sm[i] = mean(sm[1:i])
             else
@@ -23,6 +23,6 @@ function run(MCsteps::Int)
             sm[i] = gut.OL
         end
     end
-    result_ED = doED(3,2,1.0,1.0)
+    result_ED = doED(3, 2, 1.0, 1.0)
     return mean(sm), (std(sm) / √(MCsteps - 1)), result_ED
 end

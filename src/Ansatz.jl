@@ -56,7 +56,7 @@ function fast_update(
     k = -1
     flag = 0
     @inbounds for i in 1:N
-        if getindex(oldconf, i) == 1 && getindex(newconf, i) == 0 
+        if getindex(oldconf, i) == 1 && getindex(newconf, i) == 0
             Rl = i # the old position of the l-th electron
             flag += 1
         end
