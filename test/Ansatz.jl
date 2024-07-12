@@ -1,4 +1,5 @@
-using Test, FastFermionSampling
+using Test
+using FastFermionSampling
 using LinearAlgebra
 using BitBasis
 
@@ -8,18 +9,22 @@ using BitBasis
     orb = AHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
     conf_up = BitVector([1, 0, 1, 0])
     conf_down = BitVector([0, 1, 0, 1])
-    ansatz = Gutzwiller(orb, conf_up, conf_down, g)
+    ansatz = FastFermionSampling.Gutzwiller(g)
     @test ansatz.g == g
-    @test ansatz.Og == -1 / 2 * sum(@. (conf_up + conf_down - (orb.N_down + orb.N_up) / lat.ns)^2)
-    ansatz2 = Gutzwiller(orb, conf_up, conf_down, 0.0)
+    Og = FastFermionSampling.getOg(orb, conf_up, conf_down)
+    @test Og == -1 / 2 * sum(@. (conf_up + conf_down - (orb.N_down + orb.N_up) / lat.ns)^2)
 end
 
 @testset "fast_update" begin
     conf_up = BitVector([1, 0, 1, 0])
     conf_down = BitVector([0, 1, 0, 1])
     orb = AHmodel(LatticeRectangular(2, 2, Periodic()), 1.0, 1.0, 1.0, 2, 2)
-    U_upinvs = inv(orb.U_up[conf_up, :])
-    U_downinvs = inv(orb.U_down[conf_down, :])
+
+    U_upinvs = orb.U_up[conf_up, :] \ I
+    U_downinvs = orb.U_down[conf_down, :] \ I
+    @test inv(orb.U_up[conf_up, :]) ≈ orb.U_up[conf_up, :] \ I
+    @test inv(orb.U_down[conf_down, :]) ≈ orb.U_down[conf_down, :] \ I
+
     conf_upstr = LongBitStr(conf_up)
     conf_downstr = LongBitStr(conf_down)
     new_conf_up = BitVector([0, 1, 1, 0])
@@ -49,7 +54,8 @@ end
 
     @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
     @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
-
+    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, SubDitStr(new_conf_upstr, 1, 16), conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, SubDitStr(new_conf_downstr, 1, 16), conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
 end
 
 @testset "fast_G_update" begin
@@ -69,5 +75,5 @@ function OLbm(n::Int)
     orb = AHmodel(lat, 1.0, 1.0, 1.0, n^2 ÷ 2, n^2 ÷ 2)
     conf_up = FFS(orb.U_up)
     conf_down = FFS(orb.U_down)
-    Gutz = Gutzwiller(orb, conf_up, conf_down, 1.0)
+    OL = FastFermionSampling.getOL(orb, conf_up, conf_down, 1.0)
 end

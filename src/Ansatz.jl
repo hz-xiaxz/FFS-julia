@@ -1,16 +1,16 @@
 abstract type AbstractAnsatz end
 
-"""
+@doc raw"""
 Gutzwiller Ansatz
 -----------------
 * `g` : `Float64` Gutzwiller factor
-* `Og` : `Float64` Gutzwiller observable
-* `OL` : `Float64` Observable
+
+Store the Gutzwiller factor parameter `g`.
+
+The Gutzwiller factor is defined as ``G = \exp(-g/2 \sum_i (n_i - n_{mean})^2)``.
 """
 struct Gutzwiller <: AbstractAnsatz
     g::Float64
-    Og::Float64
-    OL::Float64
 end
 
 """
@@ -83,8 +83,8 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
     L = length(conf) ÷ 2
     OL = 0.0
     n_mean = (orb.N_up + orb.N_down) / orb.lattice.ns
-    U_upinvs = inv(orb.U_up[conf_up, :]) # might be optimized by column slicing
-    U_downinvs = inv(orb.U_down[conf_down, :])
+    U_upinvs = orb.U_up[conf_up, :] \ I # do invs more efficiently
+    U_downinvs = orb.U_down[conf_down, :] \ I
     xprime = getxprime(orb, conf)
     @inbounds for (confstr, coff) in pairs(xprime)
         if confstr == conf
@@ -108,21 +108,19 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
     return OL
 end
 
-
 @doc raw"""
-    Gutzwiller(orbitals::AHmodel{B}, conf_up::BitVector, conf_down::BitVector, g::Float64)
+    getOg(orbitals::AHmodel{B}, conf_up::BitVector, conf_down::BitVector)
 
-add Gutzwiller Ansatz where ``G  = \exp(-g/2 \sum_i (n_i - n_{mean})^2)``, ``\psi_G = G \psi_0``
+The local operator to update the variational parameter `g`
+``mathcal{O}_k(x)=\frac{\partial \ln \Psi_\alpha(x)}{\partial \alpha_k}``
 """
-function Gutzwiller(
+function getOg(
     orbitals::AHmodel{B},
     conf_up::BitVector,
     conf_down::BitVector,
-    g::Float64
 ) where {B}
     occupation = conf_up + conf_down
     n_mean = (orbitals.N_up + orbitals.N_down) / orbitals.lattice.ns
     Og = -1 / 2 * sum(@. (occupation - n_mean)^2)
-    OL = getOL(orbitals, conf_up, conf_down, g)
-    return Gutzwiller(g, Og, OL)
+    return Og
 end

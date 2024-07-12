@@ -62,8 +62,8 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_up = FFS(ctx.rng, mc.model.U_up)
     conf_down = FFS(ctx.rng, mc.model.U_down)
     g = 1.0 # temporarily fixed
-    Gutz = Gutzwiller(mc.model, conf_up, conf_down, g)
-    measure!(ctx, :OL, Gutz.OL)
+    OL = getOL(mc.model, conf_up, conf_down, g)
+    measure!(ctx, :OL, OL)
     return nothing
 end
 
