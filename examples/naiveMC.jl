@@ -11,16 +11,16 @@ function run(MCsteps::Int)
     for i in 1:MCsteps
         conf_up = FFS(orb.U_up)
         conf_down = FFS(orb.U_down)
-        gut = Gutzwiller(orb, conf_up, conf_down, 1.0)
+        OL = getOL(orb, conf_up, conf_down, 1.0)
         # HACK!!!
         if i > 1
-            if abs(gut.OL) > abs(10 * mean(sm[1:i]))
+            if abs(OL) > abs(10 * mean(sm[1:i]))
                 sm[i] = mean(sm[1:i])
             else
-                sm[i] = gut.OL
+                sm[i] = OL
             end
         else
-            sm[i] = gut.OL
+            sm[i] = OL
         end
     end
     result_ED = doED(3, 2, 1.0, 1.0)

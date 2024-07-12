@@ -1,4 +1,5 @@
-using Test, FastFermionSampling
+using Test
+using FastFermionSampling
 using LinearAlgebra
 using BitBasis
 
@@ -8,10 +9,10 @@ using BitBasis
     orb = AHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
     conf_up = BitVector([1, 0, 1, 0])
     conf_down = BitVector([0, 1, 0, 1])
-    ansatz = Gutzwiller(orb, conf_up, conf_down, g)
+    ansatz = FastFermionSampling.Gutzwiller(g)
     @test ansatz.g == g
-    @test ansatz.Og == -1 / 2 * sum(@. (conf_up + conf_down - (orb.N_down + orb.N_up) / lat.ns)^2)
-    ansatz2 = Gutzwiller(orb, conf_up, conf_down, 0.0)
+    Og = FastFermionSampling.getOg(orb, conf_up, conf_down)
+    @test Og == -1 / 2 * sum(@. (conf_up + conf_down - (orb.N_down + orb.N_up) / lat.ns)^2)
 end
 
 @testset "fast_update" begin
@@ -74,5 +75,5 @@ function OLbm(n::Int)
     orb = AHmodel(lat, 1.0, 1.0, 1.0, n^2 ÷ 2, n^2 ÷ 2)
     conf_up = FFS(orb.U_up)
     conf_down = FFS(orb.U_down)
-    Gutz = Gutzwiller(orb, conf_up, conf_down, 1.0)
+    OL = FastFermionSampling.getOL(orb, conf_up, conf_down, 1.0)
 end

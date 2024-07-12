@@ -7,15 +7,15 @@ using Dates
 
 tm = TaskMaker()
 tm.thermalization = 0
-tm.sweeps = 10000
-tm.binsize = 1
+tm.sweeps = 100
+tm.binsize = 10
 tm.t = 1.0
 tm.W = 1.0
 tm.U = 1.0
-tm.N_up = 20^2 ÷ 2
-tm.N_down = 20^2 ÷ 2
-tm.nx = 20
-tm.ny = 20
+tm.N_up = 2^2 ÷ 2
+tm.N_down = 2^2 ÷ 2
+tm.nx = 2
+tm.ny = 2
 tm.B = "Periodic"
 
 if tm.B == "Periodic"
@@ -28,6 +28,9 @@ end
 
 model = AHmodel(lat, tm.t, tm.W, tm.U, tm.N_up, tm.N_down)
 conf = vcat(FFS(model.U_up), FFS(model.U_down))
+
+tm.omega = model.omega
+tm.conf = Vector{Bool}(conf)
 
 task(tm)
 

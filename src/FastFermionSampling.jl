@@ -8,9 +8,8 @@ using BitBasis
 using Carlo
 using HDF5
 
-export FFS, AHmodel, LatticeRectangular, getHmat, MC
+export FFS, AHmodel, LatticeRectangular, getHmat
 export Periodic, Open, getxprime
-export Gutzwiller
 export MC
 
 include("Lattices.jl")
