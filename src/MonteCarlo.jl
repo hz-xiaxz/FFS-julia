@@ -63,11 +63,14 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_down = FFS(ctx.rng, mc.model.U_down)
     g = 1.0 # temporarily fixed
     OL = getOL(mc.model, conf_up, conf_down, g)
+    Og = getOg(mc.model, conf_up, conf_down)
     measure!(ctx, :OL, OL)
+    measure!(ctx, :Og, Og)
     return nothing
 end
 
 function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
+    # do ED here
     return nothing
 end
 
