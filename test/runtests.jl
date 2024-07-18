@@ -10,6 +10,6 @@ using Test
     include("ED.jl")
 end
 
-using Pkg
+import Pkg
 Pkg.test("QuantumLattices")
 Pkg.test("ExactDiagonalization")
