@@ -2,7 +2,7 @@
 using Statistics
 using FastFermionSampling
 
-include("ED.jl")
+include("../src/ED.jl")
 
 function run(MCsteps::Int)
     lat = LatticeRectangular(3, 2, Periodic())
@@ -23,6 +23,6 @@ function run(MCsteps::Int)
             sm[i] = OL
         end
     end
-    result_ED = doED(3, 2, 1.0, 1.0)
+    result_ED = doED(3, 2, 1.0, 1.0, zeros(3 * 2), 'P')
     return mean(sm), (std(sm) / √(MCsteps - 1)), result_ED
 end
