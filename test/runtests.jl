@@ -11,5 +11,6 @@ using Test
 end
 
 import Pkg
+Pkg.add("Pkg")
 Pkg.test("QuantumLattices")
 Pkg.test("ExactDiagonalization")
