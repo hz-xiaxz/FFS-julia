@@ -9,3 +9,7 @@ using Test
     include("MonteCarlo.jl")
     include("ED.jl")
 end
+
+using Pkg
+Pkg.test("QuantumLattices")
+Pkg.test("ExactDiagonalization")
