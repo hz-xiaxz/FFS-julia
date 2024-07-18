@@ -9,8 +9,3 @@ using Test
     include("MonteCarlo.jl")
     include("ED.jl")
 end
-
-import Pkg
-Pkg.add("Pkg")
-Pkg.test("QuantumLattices")
-Pkg.test("ExactDiagonalization")
