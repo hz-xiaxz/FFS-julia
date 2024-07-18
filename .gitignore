@@ -11,10 +11,5 @@ examples/Manifest.toml
 test/Manifest.toml
 job.results.json
 data/
-<<<<<<< HEAD
-jobs/
-=======
 Manifest-v1.11.toml
 jobs/*
->>>>>>> 4bf5ece6acbdc94b53316123428a8e064a434f6f
-Manifest-v1.11.toml
