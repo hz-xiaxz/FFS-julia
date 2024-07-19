@@ -62,12 +62,38 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_up = FFS(ctx.rng, mc.model.U_up)
     conf_down = FFS(ctx.rng, mc.model.U_down)
     g = 1.0 # temporarily fixed
-    Gutz = Gutzwiller(mc.model, conf_up, conf_down, g)
-    measure!(ctx, :OL, Gutz.OL)
+    OL = getOL(mc.model, conf_up, conf_down, g)
+    Og = getOg(mc.model, conf_up, conf_down)
+    measure!(ctx, :OL, OL)
+    measure!(ctx, :Og, Og)
+    measure!(ctx, :OLOg, OL * Og)
     return nothing
 end
 
+@doc raw"""
+     **fg** the gradient of ⟨E_g⟩
+       
+
+Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
+``f_k = -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ] = -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]``
+"""
 function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
+
+    evaluate!(eval, :fg, (:OL, :Og, :OLOg)) do OL, Og, OLOg
+        @assert isa(OL, Real) "OL should be a real number, got $OL"
+        return -2 * real(OLOg - OL * Og)
+    end
+
+    # Perform ED
+    # should not be here, while jackknife is not essential
+    # if params[:B] == "Periodic"
+    #     bound = 'P'
+    # elseif params[:B] == "Open"
+    #     bound = 'O'
+    # end
+    # evaluate!(eval, :ED_energy, (:OL,)) do OL 
+    #     doED(params[:nx], params[:ny], params[:t], params[:U], params[:omega], bound)
+    # end
     return nothing
 end
 

@@ -7,15 +7,16 @@ using Dates
 
 tm = TaskMaker()
 tm.thermalization = 0
-tm.sweeps = 10000
-tm.binsize = 1
+tm.sweeps = 100000
+tm.binsize = 100
 tm.t = 1.0
 tm.W = 1.0
 tm.U = 1.0
-tm.N_up = 20^2 ÷ 2
-tm.N_down = 20^2 ÷ 2
-tm.nx = 20
-tm.ny = 20
+tm.nx = 4 
+tm.ny = 4 
+ns = tm.nx * tm.ny
+tm.N_up = ns ÷ 2 
+tm.N_down = ns ÷ 2 
 tm.B = "Periodic"
 
 if tm.B == "Periodic"
@@ -26,10 +27,11 @@ else
     throw(ArgumentError("Boundary condition not recognized"))
 end
 
-model = AHmodel(lat, tm.t, tm.W, tm.U, tm.N_up, tm.N_down)
-conf = vcat(FFS(model.U_up), FFS(model.U_down))
 
-task(tm)
+for i in 1:10
+    model = AHmodel(lat, tm.t, tm.W, tm.U, tm.N_up, tm.N_down)
+    task(tm, omega=model.omega)
+end
 
 dir = @__DIR__
 savepath = dir * "/../data/" * Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
@@ -37,7 +39,7 @@ job = JobInfo(
     savepath,
     FastFermionSampling.MC;
     tasks=make_tasks(tm),
-    checkpoint_time="30:00",
+    checkpoint_time="5:00",
     run_time="24:00:00"
 )
 

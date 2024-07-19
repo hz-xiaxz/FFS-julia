@@ -67,6 +67,7 @@ function AHmodel(
     N_down::Int,
 ) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
+    # omega = ones(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
@@ -86,7 +87,7 @@ function fixedAHmodel(
     N_up::Int,
     N_down::Int,
 ) where {B}
-    omega = ones(Float64, lattice.ns) * W / 2
+    omega = zeros(Float64, lattice.ns) * W / 2 .+ 1e-6 * randn(Float64, lattice.ns)
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
@@ -104,7 +105,7 @@ end
 return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
 """
 function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
-    @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 x $(length(orb.omega))), got: $N"
+    @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 × $(length(orb.omega))), got: $N"
     L = length(x) ÷ 2  # Int division
     xprime = Dict{typeof(x),Float64}()
     # consider the spin up case

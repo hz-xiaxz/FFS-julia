@@ -6,7 +6,7 @@ struct LatticeRectangular{B}
     nx::Int
     ny::Int
     ns::Int
-    neigh::Vector{Vector{Int}}
+    neigh::AbstractVector
 end
 
 """
@@ -23,7 +23,7 @@ Generate a rectangular lattice with periodic or open boundary conditions
 function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
     ns = nx * ny
     # Create site index array
-    neigh = Vector{Vector{Int}}(undef, ns)
+    neigh = Vector(undef, ns)
     rectl = reshape(1:ns, nx, ny)
 
     # Define neighbor indices for each direction
@@ -34,7 +34,7 @@ function LatticeRectangular(nx::Int, ny::Int, B::Periodic)
 
     # Store neighbor information in a nested vector
     @inbounds for i in 1:ns
-        neigh[i] = [up[i], right[i], down[i], left[i]]
+        neigh[i] = Set([up[i], right[i], down[i], left[i]])
     end
     return LatticeRectangular{B}(nx, ny, ns, neigh)
 end

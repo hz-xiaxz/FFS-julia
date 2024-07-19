@@ -18,12 +18,12 @@ end
     occp = x[1:4] + x[5:end]
     @test length(keys(xprime)) == 7
     @test xprime[x] ≈ sum(occp .* orb.omega) + 1.0
-    @test xprime[LongBitStr([false, true, true, false, false, true, true, false])] == -2
-    @test xprime[LongBitStr([true, false, false, true, false, true, true, false])] == -2
-    @test xprime[LongBitStr([true, true, false, false, false, true, false, true])] == -2
-    @test xprime[LongBitStr([true, true, false, false, false, false, true, true])] == -2
-    @test xprime[LongBitStr([true, true, false, false, true, true, false, false])] == -2
-    @test xprime[LongBitStr([true, true, false, false, true, false, true, false])] == -2
+    @test xprime[LongBitStr([false, true, true, false, false, true, true, false])] == -1
+    @test xprime[LongBitStr([true, false, false, true, false, true, true, false])] == -1
+    @test xprime[LongBitStr([true, true, false, false, false, true, false, true])] == -1
+    @test xprime[LongBitStr([true, true, false, false, false, false, true, true])] == -1
+    @test xprime[LongBitStr([true, true, false, false, true, true, false, false])] == -1
+    @test xprime[LongBitStr([true, true, false, false, true, false, true, false])] == -1
     for conf in keys(xprime)
         @test sum([conf...]) == 4
     end
