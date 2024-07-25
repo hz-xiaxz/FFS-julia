@@ -5,10 +5,9 @@ Use Carlo.jl to perform high efficiency
 mutable struct MC{B} <: AbstractMC where {B}
     model::AHmodel{B}
     conf::BitVector
+    g::Float64
+    OLbench::Float64
 end
-
-seed = 42
-rng = MersenneTwister(seed)
 
 """
     MC(params::AbstractDict)
@@ -27,7 +26,9 @@ function MC(params::AbstractDict)
     end
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
-    return MC{B}(model, BitVector(zeros(2 * nx * ny)))
+    g = params[:g]
+    OLbench = getOL(model, FFS(model.U_up), FFS(model.U_down), g)
+    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g, OLbench)
 end
 
 """
@@ -47,7 +48,9 @@ Initialize the Monte Carlo object
 function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     orb = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
-    conf = vcat(FFS(ctx.rng, orb.U_up), FFS(ctx.rng, orb.U_down))
+    conf_up = FFS(ctx.rng, orb.U_up)
+    conf_down = FFS(ctx.rng, orb.U_down)
+    conf = vcat(conf_up, conf_down)
     mc.model = orb
     mc.conf = conf
 end
@@ -60,25 +63,38 @@ end
 function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_up = FFS(ctx.rng, mc.model.U_up)
     conf_down = FFS(ctx.rng, mc.model.U_down)
-    g = 1.0 # temporarily fixed
-    OL = getOL(mc.model, conf_up, conf_down, g)
+    OL = getOL(mc.model, conf_up, conf_down, mc.g)
     Og = getOg(mc.model, conf_up, conf_down)
     measure!(ctx, :OL, OL)
     measure!(ctx, :Og, Og)
+    measure!(ctx, :OLOg, OL * Og)
     return nothing
 end
 
+@doc raw"""
+     **fg** the gradient of ⟨E_g⟩
+       
+
+Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
+``f_k = -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ] = -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]``
+"""
 function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
-    # do ED here
+
+    evaluate!(eval, :fg, (:OL, :Og, :OLOg)) do OL, Og, OLOg
+        @assert isa(OL, Real) "OL should be a real number, got $OL"
+        return -2 * real(OLOg - OL * Og)
+    end
     return nothing
 end
 
 function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
     out["conf"] = Vector{Bool}(mc.conf)
+    out["OLbench"] = mc.OLbench
     return nothing
 end
 
 function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
     mc.conf = BitVector(read(in, "conf"))
+    out["OLbench"] = read(in, "OLbench")
     return nothing
 end

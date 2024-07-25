@@ -9,7 +9,8 @@ using Test, FastFermionSampling
         :U => 1.0,
         :N_up => 8,
         :N_down => 8,
-        :B => "Periodic"
+        :B => "Periodic",
+        :g => 1.0
     )
     mc = FastFermionSampling.MC(params)
     @test mc.model.lattice.nx == params[:nx]

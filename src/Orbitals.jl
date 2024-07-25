@@ -86,7 +86,7 @@ function fixedAHmodel(
         N_up::Int,
         N_down::Int
 ) where {B}
-    omega = zeros(Float64, lattice.ns) * W / 2 .+ 1e-6 * randn(Float64, lattice.ns)
+    omega = zeros(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
