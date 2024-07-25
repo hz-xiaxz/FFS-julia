@@ -16,22 +16,20 @@ function combinations(L::Int, N::Int)
 end
 
 function sort_bool_arrays(array::AbstractArray)
-    return sort(array, by=x -> evalpoly(2, reverse(x)))
+    return sort(array, by = x -> evalpoly(2, reverse(x)))
 end
 
 function exact_sample(U::AbstractMatrix, L::Int, N::Int)
-
     events = sort_bool_arrays(combinations(L, N))
     p = [abs2(det(U[ev, :])) for ev in events]
     normalize!(p)
     return (events, p)
-
 end
 
 function visualize(U::AbstractMatrix, L::Int, N::Int, itertime::Int)
     fig = Figure()
 
-    ax = Axis(fig[1, 1], title="Exact_sample", xlabel="Event", ylabel="Probability")
+    ax = Axis(fig[1, 1], title = "Exact_sample", xlabel = "Event", ylabel = "Probability")
 
     events, p = exact_sample(U, L, N)
 
@@ -48,8 +46,8 @@ function visualize(U::AbstractMatrix, L::Int, N::Int, itertime::Int)
         sampled[i] = evalpoly(2, reverse(FastFermionSampling.FFS(U, L, N)))
     end
 
-    ax2 = Axis(fig[1, 2], title="FFS", xlabel="Event", ylabel="Frequency")
-    CairoMakie.hist!(ax2, sampled, bins=400, normalization=:pdf, color=:red)
+    ax2 = Axis(fig[1, 2], title = "FFS", xlabel = "Event", ylabel = "Frequency")
+    CairoMakie.hist!(ax2, sampled, bins = 400, normalization = :pdf, color = :red)
 
     display(fig)
     save("./tmp/benchmark.png", fig)
