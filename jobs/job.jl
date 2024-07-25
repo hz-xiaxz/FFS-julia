@@ -37,9 +37,9 @@ savepath = dir * "/../data/" * "mpirun$(tm.nx)x$(tm.ny)"
 job = JobInfo(
     savepath,
     FastFermionSampling.MC;
-    tasks=make_tasks(tm),
-    checkpoint_time="5:00",
-    run_time="24:00:00"
+    tasks = make_tasks(tm),
+    checkpoint_time = "5:00",
+    run_time = "24:00:00"
 )
 
 Carlo.start(job, ARGS)
