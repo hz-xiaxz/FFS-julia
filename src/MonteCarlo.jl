@@ -32,7 +32,6 @@ function MC(params::AbstractDict)
     return MC{B}(model, BitVector(zeros(2 * nx * ny)), g)
 end
 
-
 """
     Carlo.init!(mc::MC, ctx::MCContext, params::AbstractDict)
 ------------
@@ -97,7 +96,6 @@ function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::Abstract
     # end
     return nothing
 end
-
 
 function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
     out["conf"] = Vector{Bool}(mc.conf)

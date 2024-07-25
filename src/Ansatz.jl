@@ -20,7 +20,8 @@ Fast Gutzwiller Factor update technique from Becca and Sorella 2017
 
 Should input whole configuration 
 """
-function fast_G_update(newwholeconf::BitStr{N,T}, oldwholeconf::BitStr{N,T}, g::Float64, n_mean::Float64) where {N,T}
+function fast_G_update(newwholeconf::BitStr{N, T}, oldwholeconf::BitStr{N, T},
+        g::Float64, n_mean::Float64) where {N, T}
     # search for the electron that moves
     exponent = 0
     L = N ÷ 2
@@ -46,12 +47,12 @@ end
 Fast computing technique from Becca and Sorella 2017
 """
 function fast_update(
-    U::AbstractMatrix,
-    Uinvs::AbstractMatrix,
-    newconf::Union{SubDitStr{D,N1,T1},DitStr{D,N1,T1}},
-    oldconf::BitStr{N,T}
-) where {D,N1,N,T,T1}
-    @assert length(newconf) == N "The length of the new configuration should be the same as the old configuration, got: $(length(newconf))(old) and $N(new)"
+        U::AbstractMatrix,
+        Uinvs::AbstractMatrix,
+        newconf::Union{SubDitStr{D, N1, T1}, DitStr{D, N1, T1}},
+        oldconf::BitStr{N, T}
+) where {D, N1, N, T, T1}
+    @assert length(newconf)==N "The length of the new configuration should be the same as the old configuration, got: $(length(newconf))(old) and $N(new)"
     Rl = -1 # if not found should return error
     k = -1
     flag = 0
@@ -90,20 +91,21 @@ function getOL(orb::AHmodel, conf_up::BitVector, conf_down::BitVector, g::Float6
         if confstr == conf
             OL += coff
         elseif confstr[1:L] == conf_up
-            OL +=
-                coff *
-                fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
-        elseif confstr[L+1:end] == conf_down
-            OL +=
-                coff *
-                fast_update(orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) * fast_G_update(confstr, conf, g, n_mean)
+            OL += coff *
+                  fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L),
+                      LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+        elseif confstr[(L + 1):end] == conf_down
+            OL += coff *
+                  fast_update(
+                      orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) *
+                  fast_G_update(confstr, conf, g, n_mean)
         else
-            OL +=
-                coff *
-                fast_update(orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) *
-                fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L), LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
+            OL += coff *
+                  fast_update(
+                      orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), LongBitStr(conf_up)) *
+                  fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L),
+                      LongBitStr(conf_down)) * fast_G_update(confstr, conf, g, n_mean)
         end
-
     end
     return OL
 end
@@ -115,9 +117,9 @@ The local operator to update the variational parameter `g`
 ``mathcal{O}_k(x)=\frac{\partial \ln \Psi_\alpha(x)}{\partial \alpha_k}``
 """
 function getOg(
-    orbitals::AHmodel{B},
-    conf_up::BitVector,
-    conf_down::BitVector,
+        orbitals::AHmodel{B},
+        conf_up::BitVector,
+        conf_down::BitVector
 ) where {B}
     occupation = conf_up + conf_down
     n_mean = (orbitals.N_up + orbitals.N_down) / orbitals.lattice.ns
