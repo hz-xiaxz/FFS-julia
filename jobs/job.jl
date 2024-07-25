@@ -12,11 +12,11 @@ tm.binsize = 100
 tm.t = 1.0
 tm.W = 1.0
 tm.U = 1.0
-tm.nx = 18 
-tm.ny = 18 
+tm.nx = 18
+tm.ny = 18
 ns = tm.nx * tm.ny
-tm.N_up = ns ÷ 2 
-tm.N_down = ns ÷ 2 
+tm.N_up = ns ÷ 2
+tm.N_down = ns ÷ 2
 tm.B = "Periodic"
 
 if tm.B == "Periodic"
@@ -29,7 +29,7 @@ end
 
 
 model = AHmodel(lat, tm.t, tm.W, tm.U, tm.N_up, tm.N_down)
-task(tm, omega=model.omega)
+task(tm, omega = model.omega)
 
 dir = @__DIR__
 # savepath = dir * "/../data/" * Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
@@ -37,9 +37,9 @@ savepath = dir * "/../data/" * "mpirun$(tm.nx)x$(tm.ny)"
 job = JobInfo(
     savepath,
     FastFermionSampling.MC;
-    tasks=make_tasks(tm),
-    checkpoint_time="30:00",
-    run_time="24:00:00"
+    tasks = make_tasks(tm),
+    checkpoint_time = "30:00",
+    run_time = "24:00:00"
 )
 
 Carlo.start(job, ARGS)

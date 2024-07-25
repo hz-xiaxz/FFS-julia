@@ -6,10 +6,8 @@ mutable struct MC{B} <: AbstractMC where {B}
     model::AHmodel{B}
     conf::BitVector
     g::Float64
+    OLbench::Float64
 end
-
-seed = 42
-rng = MersenneTwister(seed)
 
 """
     MC(params::AbstractDict)
@@ -29,7 +27,8 @@ function MC(params::AbstractDict)
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     g = params[:g]
-    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g)
+    OLbench = getOL(model, FFS(model.U_up), FFS(model.U_down), g)
+    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g, OLbench)
 end
 
 """
@@ -49,7 +48,9 @@ Initialize the Monte Carlo object
 function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     orb = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
-    conf = vcat(FFS(ctx.rng, orb.U_up), FFS(ctx.rng, orb.U_down))
+    conf_up = FFS(ctx.rng, orb.U_up)
+    conf_down = FFS(ctx.rng, orb.U_down)
+    conf = vcat(conf_up, conf_down)
     mc.model = orb
     mc.conf = conf
 end
@@ -83,26 +84,17 @@ function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::Abstract
         @assert isa(OL, Real) "OL should be a real number, got $OL"
         return -2 * real(OLOg - OL * Og)
     end
-
-    # Perform ED
-    # should not be here, while jackknife is not essential
-    # if params[:B] == "Periodic"
-    #     bound = 'P'
-    # elseif params[:B] == "Open"
-    #     bound = 'O'
-    # end
-    # evaluate!(eval, :ED_energy, (:OL,)) do OL 
-    #     doED(params[:nx], params[:ny], params[:t], params[:U], params[:omega], bound)
-    # end
     return nothing
 end
 
 function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
     out["conf"] = Vector{Bool}(mc.conf)
+    out["OLbench"] = mc.OLbench
     return nothing
 end
 
 function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
     mc.conf = BitVector(read(in, "conf"))
+    out["OLbench"] = read(in, "OLbench")
     return nothing
 end

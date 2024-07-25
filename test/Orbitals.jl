@@ -31,9 +31,9 @@ end
 end
 
 @testset "fixedAHmodel" begin
-    lat = LatticeRectangular(2, 2, Periodic())
-    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
-    fixedmodel = FastFermionSampling.fixedAHmodel(lattice, 1.0, 1.0, 1.0, 8, 8)
+    lat = LatticeRectangular(4, 4, Periodic())
+    orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 8, 8)
+    fixedmodel = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 8, 8)
     @test fixedmodel.N_up == 8
     @test fixedmodel.N_down == 8
     @test length(fixedmodel.omega) == 16
