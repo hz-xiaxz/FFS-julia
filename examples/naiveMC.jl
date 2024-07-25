@@ -26,7 +26,7 @@ function run(MCsteps::Int, Lx::Int, Ly::Int)
         end
     end
     fig = Figure()
-    ax = Axis(fig[1, 1], title="sampled local energy")
+    ax = Axis(fig[1, 1], title = "sampled local energy")
     CairoMakie.scatter!(ax, sm)
     display(fig)
     result_ED = doED(Lx, Ly, 1.0, 1.0, zeros(Lx * Ly), 'O')

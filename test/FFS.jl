@@ -17,7 +17,7 @@ function combinations(L::Int, N::Int)
 end
 
 function sort_bool_arrays(array::AbstractArray)
-    return sort(array, by=x -> evalpoly(2, reverse(x)))
+    return sort(array, by = x -> evalpoly(2, reverse(x)))
 end
 
 function exact_sample(U::AbstractMatrix, L::Int, N::Int)
@@ -32,7 +32,7 @@ end
 function getKLdiv(L::Int, N::Int, iter_time::Int, U::Matrix{Float64})
     # caculate the KL divergence between the exact sample and the FFS
     events, p = exact_sample(U, L, N)
-    sampled = Dict{Int,Float64}()
+    sampled = Dict{Int, Float64}()
     for (i, ev) in enumerate(events)
         sampled[evalpoly(2, reverse(ev))] = 1e-8# for KL-div not blowing up
     end
@@ -54,8 +54,8 @@ end
     @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
     U = randn(Float64, 10, 2)
     kl1 = getKLdiv(10, 2, 500, U)
-    @test kl1 ≈ 0 atol = 5 # high tolerance for now
+    @test kl1≈0 atol=5 # high tolerance for now
     kl2 = getKLdiv(10, 2, 5000, U)
-    @test kl2 ≈ 0 atol = 1
+    @test kl2≈0 atol=1
     @test kl2 < kl1
 end
