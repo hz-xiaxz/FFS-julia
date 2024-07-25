@@ -32,15 +32,15 @@ end
 Get the non-interacting Anderson model Hamiltonian Matrix to construct Slater Determinants 
 """
 function getHmat(
-    lattice::LatticeRectangular{B},
-    t::Float64,
-    omega::Vector{Float64},
-    N_up::Int,
-    N_down::Int,
+        lattice::LatticeRectangular{B},
+        t::Float64,
+        omega::Vector{Float64},
+        N_up::Int,
+        N_down::Int
 ) where {B}
     ns = lattice.ns
     N = N_up + N_down
-    @assert ns / N == 1 "Should be hall-filling"
+    @assert ns / N==1 "Should be hall-filling"
     tunneling = zeros(Float64, ns, ns)
     for (idx, neighbors) in enumerate(lattice.neigh)
         for j in neighbors
@@ -52,19 +52,18 @@ function getHmat(
     return H_mat
 end
 
-
 """
     AHmodel(lattice::LatticeRectangular{B}, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int)
 
 Generate Anderson-Hubbard model and get the sampling ensemble
 """
 function AHmodel(
-    lattice::LatticeRectangular{B},
-    t::Float64,
-    W::Float64,
-    U::Float64,
-    N_up::Int,
-    N_down::Int,
+        lattice::LatticeRectangular{B},
+        t::Float64,
+        W::Float64,
+        U::Float64,
+        N_up::Int,
+        N_down::Int
 ) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
     # omega = ones(Float64, lattice.ns) * W / 2
@@ -80,14 +79,14 @@ end
 
 # this function is for debugging
 function fixedAHmodel(
-    lattice::LatticeRectangular{B},
-    t::Float64,
-    W::Float64,
-    U::Float64,
-    N_up::Int,
-    N_down::Int,
+        lattice::LatticeRectangular{B},
+        t::Float64,
+        W::Float64,
+        U::Float64,
+        N_up::Int,
+        N_down::Int
 ) where {B}
-    omega = zeros(Float64, lattice.ns) * W / 2 .+ 1e-6 * randn(Float64, lattice.ns)
+    omega = zeros(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
     vals, vecs = eigen(H_mat)
@@ -104,12 +103,12 @@ end
 
 return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
 """
-function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
-    @assert N == 2 * length(orb.omega) "x should have the same 2x length as omega (2 × $(length(orb.omega))), got: $N"
+function getxprime(orb::AHmodel{B}, x::BitStr{N, T}) where {B, N, T}
+    @assert N==2 * length(orb.omega) "x should have the same 2x length as omega (2 × $(length(orb.omega))), got: $N"
     L = length(x) ÷ 2  # Int division
-    xprime = Dict{typeof(x),Float64}()
+    xprime = Dict{typeof(x), Float64}()
     # consider the spin up case
-    @inbounds for i = 1:L
+    @inbounds for i in 1:L
         if readbit(x, i) == 1
             xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
             if readbit(x, i) == 1 && readbit(x, i + L) == 1 # occp[i] == 2
@@ -125,10 +124,10 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
             end
         end
     end
-    @inbounds for i = L+1:length(x)
+    @inbounds for i in (L + 1):length(x)
         if readbit(x, i) == 1
-            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i-L] # On-site energy
-            for neigh in orb.lattice.neigh[i-L]
+            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i - L] # On-site energy
+            for neigh in orb.lattice.neigh[i - L]
                 if readbit(x, neigh + L) == 0
                     _x = x
                     _x &= ~indicator(T, i)

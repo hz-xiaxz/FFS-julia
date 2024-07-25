@@ -64,5 +64,4 @@ function LatticeRectangular(nx::Int, ny::Int, B::Open)
         neigh[i] = neighbors
     end
     return LatticeRectangular{B}(nx, ny, ns, neigh)
-
 end

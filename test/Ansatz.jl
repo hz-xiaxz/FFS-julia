@@ -32,8 +32,11 @@ end
     new_conf_upstr = LongBitStr([0, 1, 1, 0])
     new_conf_downstr = LongBitStr([1, 0, 0, 1])
 
-    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
-    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
+    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈
+          det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(
+        orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈
+          det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
 
     # LongBitStr testset
     conf_up = BitVector([1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0])
@@ -52,10 +55,17 @@ end
     new_conf_upstr = LongBitStr(new_conf_up)
     new_conf_downstr = LongBitStr(new_conf_down)
 
-    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
-    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
-    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, SubDitStr(new_conf_upstr, 1, 16), conf_upstr) ≈ det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
-    @test FastFermionSampling.fast_update(orb.U_down, U_downinvs, SubDitStr(new_conf_downstr, 1, 16), conf_downstr) ≈ det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
+    @test FastFermionSampling.fast_update(orb.U_up, U_upinvs, new_conf_upstr, conf_upstr) ≈
+          det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(
+        orb.U_down, U_downinvs, new_conf_downstr, conf_downstr) ≈
+          det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
+    @test FastFermionSampling.fast_update(
+        orb.U_up, U_upinvs, SubDitStr(new_conf_upstr, 1, 16), conf_upstr) ≈
+          det(orb.U_up[new_conf_up, :]) / det(orb.U_up[conf_up, :])
+    @test FastFermionSampling.fast_update(
+        orb.U_down, U_downinvs, SubDitStr(new_conf_downstr, 1, 16), conf_downstr) ≈
+          det(orb.U_down[new_conf_down, :]) / det(orb.U_down[conf_down, :])
 end
 
 @testset "fast_G_update" begin
@@ -66,7 +76,9 @@ end
     conf = LongBitStr(vcat(conf_up, conf_down))
     g = 1.0
     @test FastFermionSampling.fast_G_update(conf, conf, g, n_mean) == 1.0
-    @test FastFermionSampling.fast_G_update(LongBitStr([0, 1, 1, 0, 0, 1, 0, 1]), conf, g, n_mean) == exp(-g / 2 * ((0 - n_mean)^2 + (2 - n_mean)^2 + 2 * (1 - n_mean)^2 - 4 * (1 - n_mean)^2))
+    @test FastFermionSampling.fast_G_update(
+        LongBitStr([0, 1, 1, 0, 0, 1, 0, 1]), conf, g, n_mean) == exp(-g / 2 *
+              ((0 - n_mean)^2 + (2 - n_mean)^2 + 2 * (1 - n_mean)^2 - 4 * (1 - n_mean)^2))
 end
 
 
