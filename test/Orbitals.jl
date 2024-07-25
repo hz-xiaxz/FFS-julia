@@ -8,6 +8,7 @@ using Test
     @test model.N_down == 8
     @test length(model.omega) == 16
     # how to test Hmat?
+
 end
 
 @testset "getxprime" begin
@@ -32,10 +33,11 @@ end
 @testset "fixedAHmodel" begin
     lat = LatticeRectangular(2, 2, Periodic())
     orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
-    orb.omega .= 1.0 / 2
-    @test orb.N_up == 2
-    @test orb.N_down == 2
-    @test length(orb.omega) == 4
+    fixedmodel = FastFermionSampling.fixedAHmodel(lattice, 1.0, 1.0, 1.0, 8, 8)
+    @test fixedmodel.N_up == 8
+    @test fixedmodel.N_down == 8
+    @test length(fixedmodel.omega) == 16
+    @test allequal(fixedmodel.omega) && fixedmodel.omega[1] == 0.0
 end
 
 using BenchmarkTools

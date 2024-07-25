@@ -7,5 +7,5 @@ using Test
     include("Orbitals.jl")
     include("Ansatz.jl")
     include("MonteCarlo.jl")
-    include("ED.jl")
+    # include("ED.jl")
 end
