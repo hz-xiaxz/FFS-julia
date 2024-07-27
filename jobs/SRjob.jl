@@ -68,7 +68,7 @@ for _ in 1:SRsteps
     # temporarily omit the discipline of `fg`
 
     fg = Measurements.value(df[!, :fg][1])
-    if abs(Measurements.uncertainty(df[!, :fg][1])) > abs(fg) 
+    if abs(Measurements.uncertainty(df[!, :fg][1])) > abs(fg)
         @warn "fg has big error"
         break
     end
