@@ -78,4 +78,3 @@ for _ in 1:SRsteps
     @show g
 end
 # TODO:Merge the results
- 
