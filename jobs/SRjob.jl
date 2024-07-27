@@ -77,4 +77,5 @@ for _ in 1:SRsteps
     g += eta * fg / fisherScalar
     @show g
 end
-# TODO:Merge the results 
+# TODO:Merge the results
+ 

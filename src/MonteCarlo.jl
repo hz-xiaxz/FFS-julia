@@ -92,7 +92,7 @@ function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::Abstract
         return -2 * real(OLOg - OL * Og)
     end
     evaluate!(eval, :fisherScalar, (:Og, :Og2)) do Og, Og2
-        return Og2 - Og^2 
+        return Og2 - Og^2
     end
     return nothing
 end
