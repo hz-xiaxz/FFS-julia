@@ -65,6 +65,9 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_down = FFS(ctx.rng, mc.model.U_down)
     OL = getOL(mc.model, conf_up, conf_down, mc.g)
     Og = getOg(mc.model, conf_up, conf_down)
+    if abs(OL) > 10*abs(mc.OLbench)
+        OL = mc.OLbench
+    end
     measure!(ctx, :OL, OL)
     measure!(ctx, :Og, Og)
     measure!(ctx, :OLOg, OL * Og)
