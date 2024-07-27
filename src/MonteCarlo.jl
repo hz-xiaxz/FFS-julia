@@ -68,6 +68,7 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     measure!(ctx, :OL, OL)
     measure!(ctx, :Og, Og)
     measure!(ctx, :OLOg, OL * Og)
+    measure!(ctx, :Og2, Og^2)
     return nothing
 end
 
@@ -77,12 +78,21 @@ end
 
 Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
 ``f_k = -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ] = -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]``
+
+    **fisherScalar**
+
+Get the Fisher Matrix of the observable, ``S_{k,k'}  = ℜ⟨⟨O_k O_{k'}⟩⟩ = ℜ( ⟨O_k O_{k'}⟩ -⟨O_k⟩ ⟨O_{k'}⟩ ) `` where ``k`` and ``k'`` are labels of the parameters of the model.
+
+When ansatz has only one parameter, the Fisher Matrix is a scalar, and the Fisher Information is the inverse of the Fisher Matrix.
 """
 function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
 
     evaluate!(eval, :fg, (:OL, :Og, :OLOg)) do OL, Og, OLOg
         @assert isa(OL, Real) "OL should be a real number, got $OL"
         return -2 * real(OLOg - OL * Og)
+    end
+    evaluate!(eval, :fisherScalar, (:Og, :Og2)) do Og, Og2
+        return Og2 - Og^2 
     end
     return nothing
 end
