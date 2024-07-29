@@ -7,6 +7,7 @@ mutable struct MC{B} <: AbstractMC where {B}
     conf::BitVector
     g::Float64
     OLbench::Float64
+    q::Vector{Float64}
 end
 
 """
@@ -28,7 +29,8 @@ function MC(params::AbstractDict)
     model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     g = params[:g]
     OLbench = getOL(model, FFS(model.U_up), FFS(model.U_down), g)
-    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g, OLbench)
+    q = [2 * pi / nx, 2 * pi / ny]
+    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g, OLbench, q)
 end
 
 """
@@ -65,6 +67,7 @@ end
     conf_down = FFS(ctx.rng, mc.model.U_down)
     OL = getOL(mc.model, conf_up, conf_down, mc.g)
     Og = getOg(mc.model, conf_up, conf_down)
+    G = exp(mc.g * Og)
     if abs(OL) > 10 * abs(mc.OLbench)
         OL = mc.OLbench
     end
@@ -72,6 +75,23 @@ end
     measure!(ctx, :Og, Og)
     measure!(ctx, :OLOg, OL * Og)
     measure!(ctx, :Og2, Og^2)
+
+    measure!(ctx, :G2, G^2)
+
+    # sampling N_q
+    nx = mc.model.lattice.nx
+    ny = mc.model.lattice.ny
+    occ_2d = reshape(conf_up + conf_down, nx, ny)
+    nq = zero(ComplexF64)
+    @inbounds for i in 1:nx
+        @inbounds for j in 1:ny
+            nq += occ_2d[i, j] * exp(im * (mc.q[1] * i + mc.q[2] * j))
+        end
+    end
+
+    measure!(ctx, :G2nqnmq, G^2 * abs2(nq))
+    measure!(ctx, :G2nq, G^2 * nq)
+
     return nothing
 end
 
@@ -79,17 +99,26 @@ end
  
 **fg** the gradient of ⟨E_g⟩
 ------------
-       
 
 Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
-``f_k = -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ] = -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]``
+
+``
+\begin{align}
+f_k &= -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ]\\
+ &= -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]\\
+\end{align}
+``
 
 **fisherScalar**
------------
-
+-----------------
 Get the Fisher Matrix of the observable, ``S_{k,k'}  = ℜ⟨⟨O_k O_{k'}⟩⟩ = ℜ( ⟨O_k O_{k'}⟩ -⟨O_k⟩ ⟨O_{k'}⟩ ) `` where ``k`` and ``k'`` are labels of the parameters of the model.
 
 When ansatz has only one parameter, the Fisher Matrix is a scalar, and the Fisher Information is the inverse of the Fisher Matrix.
+
+** Structure Factor **  in low momentum
+-------------
+
+``N_q = ⟨⟨n_qn_{-q}⟩⟩_{disorder}- ⟨⟨n_q⟩⟨n_{-q}⟩⟩_{disorder}``
 """
 @inline function Carlo.register_evaluables(
         ::Type{MC}, eval::Evaluator, params::AbstractDict)
@@ -98,8 +127,13 @@ When ansatz has only one parameter, the Fisher Matrix is a scalar, and the Fishe
         @assert isa(OL, Real) "OL should be a real number, got $OL"
         return -2 * real(OLOg - OL * Og)
     end
+
     evaluate!(eval, :fisherScalar, (:Og, :Og2)) do Og, Og2
         return Og2 - Og^2
+    end
+
+    evaluate!(eval, :Nq, (:G2nqnmq, :G2nq, :G2)) do G2nqnmq, G2nq, G2
+        return G2nqnmq / G2 - abs2(G2nq) / G2^2
     end
     return nothing
 end
