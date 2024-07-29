@@ -47,7 +47,7 @@ Initialize the Monte Carlo object
 * `N_up` : `Int` number of up spins
 * `N_down` : `Int` number of down spins
 """
-function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
+@inline function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     orb = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     conf_up = FFS(ctx.rng, orb.U_up)
@@ -57,12 +57,12 @@ function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     mc.conf = conf
 end
 
-function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
+@inline function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
     mc.conf = vcat(FFS(ctx.rng, mc.model.U_up), FFS(ctx.rng, mc.model.U_down))
     return nothing
 end
 
-function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
+@inline function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_up = FFS(ctx.rng, mc.model.U_up)
     conf_down = FFS(ctx.rng, mc.model.U_down)
     OL = getOL(mc.model, conf_up, conf_down, mc.g)
@@ -96,8 +96,9 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
 end
 
 @doc raw"""
- **fg** the gradient of ⟨E_g⟩
------------       
+ 
+**fg** the gradient of ⟨E_g⟩
+------------
 
 Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
 
@@ -119,7 +120,8 @@ When ansatz has only one parameter, the Fisher Matrix is a scalar, and the Fishe
 
 ``N_q = ⟨⟨n_qn_{-q}⟩⟩_{disorder}- ⟨⟨n_q⟩⟨n_{-q}⟩⟩_{disorder}``
 """
-function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
+@inline function Carlo.register_evaluables(
+        ::Type{MC}, eval::Evaluator, params::AbstractDict)
 
     evaluate!(eval, :fg, (:OL, :Og, :OLOg)) do OL, Og, OLOg
         @assert isa(OL, Real) "OL should be a real number, got $OL"
@@ -136,13 +138,13 @@ function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::Abstract
     return nothing
 end
 
-function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
+@inline function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
     out["conf"] = Vector{Bool}(mc.conf)
     out["OLbench"] = mc.OLbench
     return nothing
 end
 
-function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
+@inline function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
     mc.conf = BitVector(read(in, "conf"))
     out["OLbench"] = read(in, "OLbench")
     return nothing
