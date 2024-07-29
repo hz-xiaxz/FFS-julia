@@ -5,7 +5,7 @@ Employing Fast Fermion Sampling Algorithm to sample free Fermions
 
 `U` : the sampling ensemble, a matrix of size `L` x `N`, where `L` is the number of energy states and `N` is the number of Fermions 
 """
-function FFS(r::AbstractRNG, u::AbstractMatrix)
+@inline function FFS(r::AbstractRNG, u::AbstractMatrix)
     # TODO: change to BitStr 
     L, N = size(u)
     v = randperm(r, N)
