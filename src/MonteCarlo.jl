@@ -79,20 +79,18 @@ function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     measure!(ctx, :G2, G^2)
 
     # sampling N_q
-    nx = mc.model.lat.nx
-    ny = mc.model.lat.ny
+    nx = mc.model.lattice.nx
+    ny = mc.model.lattice.ny
     occ_2d = reshape(conf_up + conf_down, nx, ny)
-    nq = 0
+    nq = zero(ComplexF64)
     @inbounds for i in 1:nx
         @inbounds for j in 1:ny
             nq += occ_2d[i, j] * exp(im * (mc.q[1] * i + mc.q[2] * j))
         end
     end
-    nmq = conj(nq)
 
-    measure!(ctx, :G2nqnmq, G^2 * nq * nmq)
+    measure!(ctx, :G2nqnmq, G^2 * abs2(nq))
     measure!(ctx, :G2nq, G^2 * nq)
-    measure!(ctx, :G2nmq, G^2 * nmq)
 
     return nothing
 end
@@ -132,8 +130,8 @@ function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::Abstract
         return Og2 - Og^2
     end
 
-    evaluate!(eval, :Nq, (:G2nqnmq, :G2nq, :G2nmq, :G2)) do G2nqnmq, G2nq, G2nmq, G2
-        return G2nqnmq / G2 - (G2nq / G2) * (G2nmq / G2)
+    evaluate!(eval, :Nq, (:G2nqnmq, :G2nq, :G2)) do G2nqnmq, G2nq, G2
+        return G2nqnmq / G2 - abs2(G2nq) / G2^2
     end
     return nothing
 end
