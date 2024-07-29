@@ -57,12 +57,12 @@ function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     mc.conf = conf
 end
 
-function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
+@inline function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
     mc.conf = vcat(FFS(ctx.rng, mc.model.U_up), FFS(ctx.rng, mc.model.U_down))
     return nothing
 end
 
-function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
+@inline function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     conf_up = FFS(ctx.rng, mc.model.U_up)
     conf_down = FFS(ctx.rng, mc.model.U_down)
     OL = getOL(mc.model, conf_up, conf_down, mc.g)
