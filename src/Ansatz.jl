@@ -69,6 +69,9 @@ Fast computing technique from Becca and Sorella 2017
             break
         end
     end
+    if flag == 0
+        return 1.0
+    end
     l = sum(oldconf[1:Rl]) # l-th electron 
     ratio = sum(U[k, :] .* Uinvs[:, l])
     return ratio
@@ -92,15 +95,6 @@ The observable ``O_L = \frac{<x|H|\psi_G>}{<x|\psi_G>}``
     @inbounds for (confstr, coff) in pairs(xprime)
         if confstr == conf
             OL += coff
-        elseif confstr[1:L] == conf_up
-            OL += coff *
-                  fast_update(orb.U_down, U_downinvs, SubDitStr(confstr, L + 1, 2 * L),
-                      conf_downstr) * fast_G_update(confstr, conf, g, n_mean)
-        elseif confstr[(L + 1):end] == conf_down
-            OL += coff *
-                  fast_update(
-                      orb.U_up, U_upinvs, SubDitStr(confstr, 1, L), conf_upstr) *
-                  fast_G_update(confstr, conf, g, n_mean)
         else
             OL += coff *
                   fast_update(
