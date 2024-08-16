@@ -6,7 +6,6 @@
 /docs/build/
 /tmp
 FastFermionSampling.code-workspace
-examples/Manifest.toml
 .vscode/
 test/Manifest.toml
 job.results.json
@@ -14,3 +13,4 @@ data/
 Manifest-v1.11.toml
 jobs/checkg.jl
 jobs/checkOL.jl
+examples/Manifest.toml

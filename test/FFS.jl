@@ -24,7 +24,7 @@ function exact_sample(U::AbstractMatrix, L::Int, N::Int)
 
     events = sort_bool_arrays(combinations(L, N))
     p = [abs2(det(U[ev, :])) for ev in events]
-    normalize!(p)
+    p = p / sum(p)
     return (events, p)
 
 end
@@ -43,7 +43,7 @@ function getKLdiv(L::Int, N::Int, iter_time::Int, U::Matrix{Float64})
     for (i, key) in enumerate(sort(collect(keys(sampled))))
         q[i] = sampled[key]
     end
-    normalize!(q)
+    q = q / sum(q)
     # KL divergence ∑ p(x) log(p(x)/q(x))
     kl = sum(p .* log.(p ./ q))
     return kl
@@ -51,8 +51,8 @@ end
 
 @testset "FFS" begin
     rng = MersenneTwister(123)
-    @test FFS(rng, randn(Float64, 10, 2)) isa BitVector
     U = randn(Float64, 10, 2)
+    @test FastFermionSampling.FFS(rng, U) isa BitVector
     kl1 = getKLdiv(10, 2, 500, U)
     @test kl1≈0 atol=5 # high tolerance for now
     kl2 = getKLdiv(10, 2, 5000, U)
