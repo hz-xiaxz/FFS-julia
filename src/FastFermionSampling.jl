@@ -7,6 +7,7 @@ using LinearAlgebra
 using BitBasis
 using Carlo
 using HDF5
+using GenericLinearAlgebra
 
 export FFS, AHmodel, LatticeRectangular, getHmat
 export Periodic, Open, getxprime

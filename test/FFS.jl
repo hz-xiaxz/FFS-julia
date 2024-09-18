@@ -59,3 +59,20 @@ end
     @test kl2≈0 atol=1
     @test kl2 < kl1
 end
+
+@testset "mynullspace" begin
+    rng = Random.Xoshiro(42)
+    function generate_ill_conditioned_rank_deficient_matrix(rng, n, condition_number)
+        D = Diagonal(condition_number .^ ((0:(n - 1)) ./ n))
+
+        Q = qr(randn(rng, n, n)).Q
+
+        A = Q * D * Q'
+
+        A[end, :] = sum(A[1:(end - 1), :], dims = 1)
+
+        return A
+    end
+    A1 = generate_ill_conditioned_rank_deficient_matrix(rng, 3, 1e2)
+    @test FastFermionSampling.mynullspace(A1) ≈ LinearAlgebra.nullspace(A1)
+end
