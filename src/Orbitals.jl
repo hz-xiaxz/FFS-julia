@@ -4,7 +4,7 @@ abstract type AbstractOrbitals end
 Anderson-Hubbard Model
 ----------------------
 
-* `lattice` : `LatticeRectangular{B}` The lattice structure   
+* `lattice` : `LatticeRectangular{B}` The lattice structure
 * `t`: `Float64` Hopping parameter
 * `W` : `Float64` Disorder strength, on site energy is sampled from `N(0, W/2)`
 * `U` : `Float64` On-site interaction strength
@@ -29,7 +29,7 @@ end
 """
     getHmat(lattice::LatticeRectangular{B}, t::Float64, omega::Vector{Float64}, N_up::Int, N_down::Int)'
 
-Get the non-interacting Anderson model Hamiltonian Matrix to construct Slater Determinants 
+Get the non-interacting Anderson model Hamiltonian Matrix to construct Slater Determinants
 """
 function getHmat(
         lattice::LatticeRectangular{B},
@@ -119,7 +119,7 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N, T}) where {B, N, T}
                     _x = x
                     _x &= ~indicator(T, i)
                     _x |= indicator(T, neigh)
-                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping
                 end
             end
         end
@@ -132,7 +132,7 @@ function getxprime(orb::AHmodel{B}, x::BitStr{N, T}) where {B, N, T}
                     _x = x
                     _x &= ~indicator(T, i)
                     _x |= indicator(T, neigh + L)
-                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping 
+                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping
                 end
             end
         end
