@@ -33,13 +33,13 @@ Employing Fast Fermion Sampling Algorithm to sample free Fermions
     sampled[x_new] = true
     avail[x_new] = false
     n_vec = normalize([-U[x_new, 2] / U[x_new, 1], 1])
-    @inbounds for i = 2:(N-1)
-        prob = abs2.((view(U, :, 1:i)*n_vec)[avail])
+    @inbounds for i in 2:(N - 1)
+        prob = abs2.((view(U, :, 1:i) * n_vec)[avail])
         x_new = sample(r, groud_set[avail], Weights(prob))
         sampled[x_new] = true
         avail[x_new] = false
         # now compute next n_vec
-        U_x = U[sampled, 1:i+1]
+        U_x = U[sampled, 1:(i + 1)]
         # to deal with instability
         try
             n_vec = nullspace(U_x)
@@ -47,7 +47,7 @@ Employing Fast Fermion Sampling Algorithm to sample free Fermions
             n_vec = mynullspace(U_x)
         end
     end
-    prob = abs2.((view(U, :, 1:N)*n_vec)[avail])
+    prob = abs2.((view(U, :, 1:N) * n_vec)[avail])
     x_new = sample(r, groud_set[avail], Weights(prob))
     sampled[x_new] = true
     avail[x_new] = false
