@@ -8,6 +8,8 @@ using BitBasis
 using Carlo
 using HDF5
 using GenericLinearAlgebra
+using SparseArrays
+using ArnoldiMethod
 
 export FFS, AHmodel, LatticeRectangular, getHmat
 export Periodic, Open, getxprime
