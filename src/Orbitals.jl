@@ -52,10 +52,29 @@ function getHmat(
     return H_mat
 end
 
+function check_shell(E::AbstractArray, Nup::Int, ns::Int)
+    shell_pool = []
+    # iteratively find degenerate spaces
+    start_shell = 1
+    while start_shell < length(E)
+        num = findlast(x -> isapprox(x, E[start_shell], atol = 1e-10), E)
+        push!(shell_pool, (start_shell, num))
+        start_shell = num + 1
+    end
+    # the number of N_up and N_down should be at least > num
+    shell = filter(
+        x -> (x[1] <= Nup && x[2] > Nup) || (x[1] <= (ns - Nup) && x[2] > (ns - Nup)),
+        shell_pool
+    )
+    return isempty(shell)
+end
+
 """
     AHmodel(lattice::LatticeRectangular{B}, t::Float64, W::Float64, U::Float64, N_up::Int, N_down::Int)
 
 Generate Anderson-Hubbard model and get the sampling ensemble
+
+Raise warning if the shell of degenerate eigenstates are not whole-filled
 """
 function AHmodel(
         lattice::LatticeRectangular{B},
@@ -69,11 +88,18 @@ function AHmodel(
     # omega = ones(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
-    vals, vecs = eigen(H_mat)
+    H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
-    sorted_indices = sortperm(vals)
-    U_up = vecs[:, sorted_indices[1:N_up]]
-    U_down = vecs[:, sorted_indices[1:N_down]]
+    # note eigenvalues could be degenerate, so a better way is to use Arnoldi method
+    # also Schur decomposition is more stable than eigen
+    nev = max(N_up, N_down)
+    decomp, history = ArnoldiMethod.partialschur(
+        H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
+    U_up = decomp.Q[:, 1:N_up]
+    U_down = decomp.Q[:, 1:N_down]
+    if !check_shell(diag(decomp.R), N_up, lattice.ns)
+        @warn "The shell of degenerate eigenstates are not whole-filled"
+    end
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
 end
 
@@ -89,12 +115,14 @@ function fixedAHmodel(
     omega = zeros(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
-    vals, vecs = eigen(H_mat)
+    H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
     # eigen function may have numerical instability problem, see issue(#21)
-    sorted_indices = sortperm(vals)
-    U_up = vecs[:, sorted_indices[1:N_up]]
-    U_down = vecs[:, sorted_indices[1:N_down]]
+    nev = max(N_up, N_down)
+    decomp, history = ArnoldiMethod.partialschur(
+        H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
+    U_up = decomp.Q[:, 1:N_up]
+    U_down = decomp.Q[:, 1:N_down]
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
 end
 
