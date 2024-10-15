@@ -20,6 +20,6 @@ include("Orbitals.jl")
 include("FFS.jl")
 include("Ansatz.jl")
 include("MonteCarlo.jl")
-include("ED.jl")
+# include("ED.jl")
 
 end

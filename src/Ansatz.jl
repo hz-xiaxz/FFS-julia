@@ -18,7 +18,7 @@ end
 
 Fast Gutzwiller Factor update technique from Becca and Sorella 2017
 
-Should input whole configuration 
+Should input whole configuration
 """
 @inline function fast_G_update(newwholeconf::BitStr{N, T}, oldwholeconf::BitStr{N, T},
         g::Float64, n_mean::Float64) where {N, T}
@@ -72,7 +72,7 @@ Fast computing technique from Becca and Sorella 2017
     if flag == 0
         return 1.0
     end
-    l = sum(oldconf[1:Rl]) # l-th electron 
+    l = sum(oldconf[1:Rl]) # l-th electron
     ratio = sum(U[k, :] .* Uinvs[:, l])
     return ratio
 end

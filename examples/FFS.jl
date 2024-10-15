@@ -35,7 +35,7 @@ end
     sampled = falses(L)
     avail = trues(L)
     groud_set = collect(1:L)
-    # For x1 case, P(x1;m) = |U_{x1, m1}|^2 
+    # For x1 case, P(x1;m) = |U_{x1, m1}|^2
     p = abs2.(U[:, 1])
     x_new = sample(r, 1:L, Weights(p))
     sampled[x_new] = true
