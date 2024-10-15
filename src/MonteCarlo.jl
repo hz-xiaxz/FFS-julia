@@ -97,25 +97,25 @@ end
 
 @doc raw"""
 
-**fg** the gradient of ⟨E_g⟩
+``fg`` the gradient of ⟨E_g⟩
 ------------
 
 Get the gradient of the observable, ``f_g = - ∂ ⟨E_g⟩/ ∂ g``.
 
-``
+``math
 \begin{align}
 f_k &= -2 ℜ[⟨O_L(x)^* × (O_g(x)- ⟨O_g⟩) ⟩ ]\\
  &= -2 ℜ[⟨O_L(x)^* × O_g(x) ⟩ - ⟨O_L(x)^* ⟩ × ⟨O_g⟩  ]\\
 \end{align}
 ``
 
-**fisherScalar**
+Fisher Scalar
 -----------------
 Get the Fisher Matrix of the observable, ``S_{k,k'}  = ℜ⟨⟨O_k O_{k'}⟩⟩ = ℜ( ⟨O_k O_{k'}⟩ -⟨O_k⟩ ⟨O_{k'}⟩ ) `` where ``k`` and ``k'`` are labels of the parameters of the model.
 
 When ansatz has only one parameter, the Fisher Matrix is a scalar, and the Fisher Information is the inverse of the Fisher Matrix.
 
-** Structure Factor **  in low momentum
+Structure Factor in low momentum
 -------------
 
 ``N_q = ⟨⟨n_qn_{-q}⟩⟩_{disorder}- ⟨⟨n_q⟩⟨n_{-q}⟩⟩_{disorder}``
