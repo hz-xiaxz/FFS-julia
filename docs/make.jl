@@ -13,11 +13,11 @@ const numbered_pages = [file
 makedocs(;
     modules = [FastFermionSampling],
     authors = "XuanzheXia",
-    repo = "https://github.com/hz-xiaxz/FastFermionSampling.jl/blob/{commit}{path}#{line}",
-    sitename = "FastFermionSampling.jl",
+    repo = "https://github.com/hz-xiaxz/FFS-julia/blob/{commit}{path}#{line}",
+    sitename = "FFS-julia",
     format = Documenter.HTML(;
-        canonical = "https://hz-xiaxz.github.io/FastFermionSampling.jl"),
+        canonical = "https://hz-xiaxz.github.io/FFS-julia"),
     pages = ["index.md"; numbered_pages]
 )
 
-deploydocs(; repo = "github.com/hz-xiaxz/FastFermionSampling.jl")
+deploydocs(; repo = "github.com/hz-xiaxz/FFS-julia")
