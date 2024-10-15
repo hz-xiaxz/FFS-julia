@@ -11,10 +11,13 @@
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![All Contributors](https://img.shields.io/github/all-contributors/hz-xiaxz/FastFermionSampling.jl?labelColor=5e1ec7&color=c0ffee&style=flat-square)](#contributors)
 [![BestieTemplate](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/JuliaBesties/BestieTemplate.jl/main/docs/src/assets/badge.json)](https://github.com/JuliaBesties/BestieTemplate.jl)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
-## How to Cite
+> [!IMPORTANT]
+>
+> This project is still in development and not yet ready for use. Please check back later for updates.
 
-If you use FastFermionSampling.jl in your work, please cite using the reference given in [CITATION.cff](https://github.com/hz-xiaxz/FastFermionSampling.jl/blob/main/CITATION.cff).
+Fast Fermion Sampling Simulation for 2D Anderson-Hubbard Lattice Model. Work in progress.
 
 ## Contributing
 
