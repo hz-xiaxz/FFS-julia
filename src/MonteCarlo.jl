@@ -96,7 +96,7 @@ end
 end
 
 @doc raw"""
- 
+
 **fg** the gradient of ⟨E_g⟩
 ------------
 
