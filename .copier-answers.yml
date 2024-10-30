@@ -1,13 +1,15 @@
 # Changes here will be overwritten by Copier
 AnswerStrategy: recommended
-Authors: XuanzheXia
+Authors: XuanzheXia <hzxiaxz@gmail.com>
 CodeOfConductContact: hz-xiaxz
+ConfigIndentation: 2
 JuliaIndentation: 4
 JuliaMinVersion: '1.10'
 License: MIT
 LicenseCopyrightHolders: hz-xiaxz
+MarkdownIndentation: 2
 PackageName: FastFermionSampling
 PackageOwner: hz-xiaxz
 PackageUUID: 7138107a-3882-4a4c-937b-b185d0f51c68
-_commit: v0.13.0
+_commit: v0.14.0
 _src_path: https://github.com/JuliaBesties/BestieTemplate.jl
