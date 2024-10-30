@@ -8,9 +8,10 @@ body:
 
         Please, before submitting, make sure that:
 
-        - There is not an [existing issue](https://github.com/hz-xiaxz/FastFermionSampling.jl/issues) with the same question
-        - You have read the [contributing guide](https://hz-xiaxz.github.io/FastFermionSampling.jl/dev/90-contributing/)
-        - You are following the [code of conduct](https://github.com/hz-xiaxz/FastFermionSampling.jl/blob/main/CODE_OF_CONDUCT.md)
+        - There is not an [existing issue](https://github.com/hz-xiaxz/FFS-julia/issues) with the same question
+        - You have read the [contributing guide](https://hz-xiaxz.github.io/FFS-julia/dev/90-contributing/)
+        - You are following the [code of conduct](https://github.com/hz-xiaxz/FFS-julia/blob/main/CODE_OF_CONDUCT.md)
+        
         The form below should help you in filling out this issue.
   - type: textarea
     id: description

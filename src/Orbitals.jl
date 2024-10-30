@@ -52,6 +52,11 @@ function getHmat(
     return H_mat
 end
 
+"""
+    check_shell(E::AbstractArray, Nup::Int, ns::Int)
+
+Check if the whole degenerate shell of single particle eigenstates are filled.
+"""
 function check_shell(E::AbstractArray, Nup::Int, ns::Int)
     shell_pool = []
     # iteratively find degenerate spaces
