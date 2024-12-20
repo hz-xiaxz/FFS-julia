@@ -14,44 +14,98 @@ end
 
 
 """
-    FFS([rng=default_rng()], U::AbstractMatrix)
+    FFS([rng=default_rng()], ensemble_matrix::AbstractMatrix)
 
-Employing Fast Fermion Sampling Algorithm to sample free Fermions
+Employs the Fast Fermion Sampling Algorithm to sample free fermion states.
 
-`U` : the sampling ensemble, a matrix of size `L` x `N`, where `L` is the number of energy states and `N` is the number of Fermions
+# Arguments
+- `rng`: Random number generator (optional)
+- `ensemble_matrix`: Matrix of size L×N where:
+  * L is the number of energy states
+  * N is the number of fermions
+  * Columns represent single-particle states
+
+# Returns
+- `κ`: Vector of Int, length L indicating the order in which states were sampled
+
+# Throws
+- `ArgumentError`: If matrix dimensions are invalid or N ≤ 0
+- `LinearAlgebra.SingularException`: If null space calculation fails
 """
-@inline function FFS(r::AbstractRNG, u::AbstractMatrix)
-    L, N = size(u)
-    v = randperm(r, N)
-    U = u[:, v]
-    sampled = falses(L)
-    avail = trues(L)
-    groud_set = collect(1:L)
-    # For x1 case, P(x1;m) = |U_{x1, m1}|^2
-    p = abs2.(U[:, 1])
-    x_new = sample(r, 1:L, Weights(p))
-    sampled[x_new] = true
-    avail[x_new] = false
-    n_vec = normalize([-U[x_new, 2] / U[x_new, 1], 1])
+@inline function FFS(rng::AbstractRNG, ensemble_matrix::AbstractMatrix)
+    L, N = size(ensemble_matrix)
+
+    # Input validation
+    N > 1 || throw(ArgumentError("Number of fermions must be positive and greater than 1"))
+    L ≥ N || throw(ArgumentError("Number of states must be ≥ number of fermions"))
+
+    # Initialize
+    perm = randperm(rng, N)
+    U = ensemble_matrix[:, perm]
+    κ = zeros(Int, L)
+    available = trues(L)
+    state_indices = collect(1:L)
+    sampled_indices = Int[]
+
+    # Sample first state
+    probs = abs2.(U[:, 1])
+    sum(probs) ≈ 1.0 || @warn "Probabilities don't sum to 1: $(sum(probs))"
+    sampled_state = sample(rng, state_indices, Weights(probs))
+    κ[sampled_state] = 1
+    available[sampled_state] = false
+    push!(sampled_indices, sampled_state)
+
+    # Initial null vector
+    null_vector = normalize([-U[sampled_state, 2] / U[sampled_state, 1], 1])
+
+    # Sample remaining states
     @inbounds for i in 2:(N - 1)
-        prob = abs2.((view(U, :, 1:i) * n_vec)[avail])
-        x_new = sample(r, groud_set[avail], Weights(prob))
-        sampled[x_new] = true
-        avail[x_new] = false
-        # now compute next n_vec
-        U_x = U[sampled, 1:(i + 1)]
-        # to deal with instability
-        try
-            n_vec = nullspace(U_x)
-        catch
-            n_vec = mynullspace(U_x)
-        end
+        # Calculate probabilities
+        probs = compute_probabilities(U, available, null_vector, i)
+
+        # Sample next state
+        sampled_state = sample(rng, state_indices[available], Weights(probs))
+        κ[sampled_state] = i
+        available[sampled_state] = false
+        push!(sampled_indices, sampled_state)
+
+        # Update null vector
+        U_sampled = U[sampled_indices, 1:(i + 1)]
+        null_vector = compute_null_vector(U_sampled)
     end
-    prob = abs2.((view(U, :, 1:N) * n_vec)[avail])
-    x_new = sample(r, groud_set[avail], Weights(prob))
-    sampled[x_new] = true
-    avail[x_new] = false
-    return sampled
+
+    # Sample final state
+    probs = compute_probabilities(U, available, null_vector, N)
+    sampled_state = sample(rng, state_indices[available], Weights(probs))
+    κ[sampled_state] = N
+
+    return κ
 end
 
-FFS(u::AbstractMatrix) = FFS(Random.default_rng(), u)
+"""Helper function to compute sampling probabilities"""
+function compute_probabilities(
+        U::AbstractMatrix, available::BitVector, null_vector::Vector, i::Int)
+    probs = abs2.((view(U, :, 1:i) * null_vector)[available])
+    sum(probs) ≈ 1.0 || @warn "Probabilities don't sum to 1: $(sum(probs))"
+    return probs
+end
+
+"""Helper function to compute null vector with stability checks"""
+function compute_null_vector(U_sampled::AbstractMatrix)
+    try
+        null_vec = nullspace(U_sampled)
+        # Check if nullspace returned valid result
+        if size(null_vec, 2) != 1
+            throw(LinearAlgebra.SingularException(size(U_sampled, 2)))
+        end
+        return vec(null_vec)
+    catch e
+        if e isa LinearAlgebra.SingularException
+            return mynullspace(U_sampled)
+        end
+        rethrow(e)
+    end
+end
+
+# Default RNG version
+FFS(ensemble_matrix::AbstractMatrix) = FFS(Random.default_rng(), ensemble_matrix)

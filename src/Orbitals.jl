@@ -40,7 +40,7 @@ function getHmat(
 ) where {B}
     ns = lattice.ns
     N = N_up + N_down
-    @assert ns / N==1 "Should be hall-filling"
+    @assert ns==N "Should be hall-filling"
     tunneling = zeros(Float64, ns, ns)
     for (idx, neighbors) in enumerate(lattice.neigh)
         for j in neighbors
@@ -132,43 +132,133 @@ function fixedAHmodel(
 end
 
 """
-    getxprime(orb::AHmodel{B}, x::BitStr{N,T}) where {B,N,T}
-
-return ``|x'> = H|x>``  where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
+Represents different types of terms in the Hamiltonian
 """
-function getxprime(orb::AHmodel{B}, x::BitStr{N, T}) where {B, N, T}
-    @assert N==2 * length(orb.omega) "x should have the same 2x length as omega (2 × $(length(orb.omega))), got: $N"
-    L = length(x) ÷ 2  # Int division
-    xprime = Dict{typeof(x), Float64}()
-    # consider the spin up case
-    @inbounds for i in 1:L
-        if readbit(x, i) == 1
-            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i] # On-site energy
-            if readbit(x, i) == 1 && readbit(x, i + L) == 1 # occp[i] == 2
-                xprime[x] += orb.U # Hubbard Interaction
-            end
-            for neigh in orb.lattice.neigh[i]
-                if readbit(x, neigh) == 0
-                    _x = x
-                    _x &= ~indicator(T, i)
-                    _x |= indicator(T, neigh)
-                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping
-                end
-            end
-        end
-    end
-    @inbounds for i in (L + 1):length(x)
-        if readbit(x, i) == 1
-            xprime[x] = get!(xprime, x, 0.0) + orb.omega[i - L] # On-site energy
-            for neigh in orb.lattice.neigh[i - L]
-                if readbit(x, neigh + L) == 0
-                    _x = x
-                    _x &= ~indicator(T, i)
-                    _x |= indicator(T, neigh + L)
-                    xprime[_x] = get!(xprime, _x, 0.0) - orb.t # Hopping
-                end
-            end
-        end
-    end
+abstract type HamiltonianTerm end
+
+struct DiagonalTerm <: HamiltonianTerm
+    site::Int
+    energy::Float64
+end
+
+struct HoppingTerm <: HamiltonianTerm
+    from_site::Int
+    to_site::Int
+    spin_up::Bool
+    energy::Float64
+end
+
+"""
+    getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int})
+
+Compute ``|x'> = H|x>`` where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
+"""
+function getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int}) where {B}
+    @assert length(κup)==length(κdown) "Length of κ↑ and κ↓ should match the number of sites"
+
+    # Initialize result dictionary with better key type
+    xprime = initialize_hamiltonian()
+
+    # Add different contributions
+    add_onsite_terms!(xprime, orb, κup, κdown)
+    add_hubbard_terms!(xprime, orb, κup, κdown)
+    add_hopping_terms!(xprime, orb, κup, κdown)
+
     return xprime
+end
+
+"""Initialize the Hamiltonian dictionary with proper types"""
+function initialize_hamiltonian()::Dict{Tuple{Int, Int, Int, Int}, Float64}
+    return Dict{Tuple{Int, Int, Int, Int}, Float64}()
+end
+
+"""Add on-site energy terms"""
+function add_onsite_terms!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        orb::AHmodel{B},
+        κup::Vector{Int},
+        κdown::Vector{Int}
+) where {B}
+    @inbounds for i in 1:(orb.lattice.ns)
+        if is_occupied(κup, i)
+            add_diagonal_term!(xprime, orb.omega[i])
+        end
+        if is_occupied(κdown, i)
+            # should be modified if the disorder of spin up and down are different
+            add_diagonal_term!(xprime, orb.omega[i])
+        end
+    end
+end
+
+"""Add Hubbard interaction terms"""
+function add_hubbard_terms!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        orb::AHmodel{B},
+        κup::Vector{Int},
+        κdown::Vector{Int}
+) where {B}
+    @inbounds for i in 1:(orb.lattice.ns)
+        if is_occupied(κup, i) && is_occupied(κdown, i)
+            add_diagonal_term!(xprime, orb.U)
+        end
+    end
+end
+
+"""Add a diagonal term to the Hamiltonian"""
+function add_diagonal_term!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        energy::Float64
+)
+    key = (-1, -1, -1, -1)
+    xprime[key] = get!(xprime, key, 0.0) + energy
+end
+
+@enum Spin Up Down
+
+"""Add hopping terms for both spin species"""
+function add_hopping_terms!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        orb::AHmodel{B},
+        κup::Vector{Int},
+        κdown::Vector{Int}
+) where {B}
+    add_spin_hopping!(xprime, orb, κup, Up)
+    add_spin_hopping!(xprime, orb, κdown, Down)
+end
+
+"""Add hopping terms for a specific spin"""
+function add_spin_hopping!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        orb::AHmodel{B},
+        κ::Vector{Int},
+        spin::Spin
+) where {B}
+    @inbounds for (site, occupation) in enumerate(κ)
+        iszero(occupation) && continue
+
+        for neighbor in orb.lattice.neigh[site]
+            if !is_occupied(κ, neighbor)
+                K = neighbor
+                l = occupation
+                add_hop!(xprime, K, l, spin, -orb.t)
+            end
+        end
+    end
+end
+
+"""Add a single hopping term to the Hamiltonian"""
+function add_hop!(
+        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
+        K::Int,
+        l::Int,
+        spin::Spin,
+        energy::Float64
+)
+    key = if spin == Up
+        (K, l, -1, -1)
+    else
+        (-1, -1, K, l)
+    end
+
+    xprime[key] = get!(xprime, key, 0.0) + energy
 end

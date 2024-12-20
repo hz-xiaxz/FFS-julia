@@ -11,6 +11,57 @@ mutable struct MC{B} <: AbstractMC where {B}
 end
 
 """
+    tilde_U(U::AbstractMatrix, kappa::Vector{Int})
+------------
+Creates a tilde matrix by rearranging rows of U according to kappa indices.
+
+Parameters:
+- `U`: Source matrix of size (n × m)
+- `kappa`: Vector of indices where each non-zero value l indicates that row Rl of U
+          should be placed at row l of the output
+
+Returns:
+- A matrix of size (m × m) with same element type as U
+"""
+function tilde_U(U::AbstractMatrix, kappa::Vector{Int})
+    m = size(U, 2)
+    n = size(U, 1)
+    # check if kappa is valid
+    length(kappa) == n || throw(
+        DimensionMismatch(
+        "Length of kappa ($(length(kappa))) must match number of rows in U ($n)",
+    ),
+    )
+    length(filter(x -> x != 0, kappa)) == m ||
+        throw(ArgumentError("kappa ($kappa) is not valid"))
+
+    # Create output matrix with same element type as U and requested size
+    tilde_U = zeros(eltype(U), m, m)
+
+    @inbounds for (Rl, l) in enumerate(kappa)
+        if l != 0
+            (1 ≤ l ≤ m) || throw(BoundsError(tilde_U, (l, :)))
+            tilde_U[l, :] = U[Rl, :]
+        end
+    end
+
+    return tilde_U
+end
+
+"""
+    is_occupied(kappa::Vector{Int}, l::Int) -> Bool
+
+Check if site `l` is occupied in the kappa configuration vector.
+
+Throws:
+    BoundsError: if l is outside the valid range of kappa
+"""
+@inline function is_occupied(kappa::Vector{Int}, l::Int)
+    @boundscheck 1 ≤ l ≤ length(kappa) || throw(BoundsError(kappa, l))
+    @inbounds return !iszero(kappa[l])
+end
+
+"""
     MC(params::AbstractDict)
 ------------
 Create a Monte Carlo object
