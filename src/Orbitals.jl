@@ -133,23 +133,6 @@ function fixedAHmodel(
 end
 
 """
-Represents different types of terms in the Hamiltonian
-"""
-abstract type HamiltonianTerm end
-
-struct DiagonalTerm <: HamiltonianTerm
-    site::Int
-    energy::Float64
-end
-
-struct HoppingTerm <: HamiltonianTerm
-    from_site::Int
-    to_site::Int
-    spin_up::Bool
-    energy::Float64
-end
-
-"""
     getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int})
 
 Compute ``|x'> = H|x>`` where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
@@ -158,7 +141,7 @@ function getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int}) wher
     @assert length(κup)==length(κdown) "Length of κ↑ and κ↓ should match the number of sites"
 
     # Initialize result dictionary with better key type
-    xprime = initialize_hamiltonian()
+    xprime = Dict{Tuple{Int, Int, Int, Int}, Float64}()
 
     # Add different contributions
     add_onsite_terms!(xprime, orb, κup, κdown)
@@ -168,10 +151,6 @@ function getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int}) wher
     return xprime
 end
 
-"""Initialize the Hamiltonian dictionary with proper types"""
-function initialize_hamiltonian()::Dict{Tuple{Int, Int, Int, Int}, Float64}
-    return Dict{Tuple{Int, Int, Int, Int}, Float64}()
-end
 
 """Add on-site energy terms"""
 function add_onsite_terms!(
