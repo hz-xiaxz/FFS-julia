@@ -145,8 +145,6 @@ Initialize the Monte Carlo object
             end
         end
     end
-    mc.W_up = mc.model.U_up * U_upinvs
-    mc.W_down = mc.model.U_down * U_downinvs
     return nothing
 end
 
@@ -157,12 +155,9 @@ end
 end
 
 @inline function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
-    OL = getOL(mc.model, mc.κup, mc.κdown, mc.g, mc.W_up, mc.W_down)
-    Og = getOg(mc.model, mc.κup, mc.κdown)
+    OL = getOL(mc)
+    Og = getOg(mc)
     G = exp(mc.g * Og)
-    if abs(OL) > 10 * abs(mc.OLbench)
-        OL = mc.OLbench
-    end
     measure!(ctx, :OL, OL)
     measure!(ctx, :Og, Og)
     measure!(ctx, :OLOg, OL * Og)

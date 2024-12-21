@@ -1,21 +1,6 @@
-using Test, FastFermionSampling
-
-# @testset "MC" begin
-#     params = Dict(
-#         :nx => 4,
-#         :ny => 4,
-#         :t => 1.0,
-#         :W => 1.0,
-#         :U => 1.0,
-#         :N_up => 8,
-#         :N_down => 8,
-#         :B => "Periodic",
-#         :g => 1.0
-#     )
-#     mc = FastFermionSampling.MC(params)
-#     @test mc.model.lattice.nx == params[:nx]
-#     @test mc.model.lattice.ny == params[:ny]
-# end
+using Test
+using FastFermionSampling
+using FastFermionSampling: MC, tilde_U, reevaluateW!
 
 @testset "tilde_U tests" begin
     @testset "Basic functionality" begin
@@ -122,4 +107,30 @@ using Test, FastFermionSampling
         result_int = tilde_U(U_int, kappa)
         @test eltype(result_int) == eltype(U_int)
     end
+end
+
+@testset "reevaluateW! tests" begin
+    @testset "Basic functionality" begin
+        # Create a simple 2x2 test case
+        kappa_up = [1, 0, 2, 0]
+        kappa_down = [2, 0, 1, 0]
+        lat = LatticeRectangular(2, 2, Periodic())
+        model = AHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
+        mc = MC(model, kappa_up, kappa_down, zeros(2, 2),
+            zeros(2, 2), 1.0, [2 * pi / 2, 2 * pi / 2])
+
+        reevaluateW!(mc)
+
+        tilde_U_up = tilde_U(model.U_up, kappa_up)
+        tilde_U_down = tilde_U(model.U_down, kappa_down)
+        U_upinvs = tilde_U_up \ I
+        U_downinvs = tilde_U_down \ I
+        W_up_expected = model.U_up * U_upinvs
+        W_down_expected = model.U_down * U_downinvs
+
+        @test isapprox(mc.W_up, W_up_expected, atol = 1e-10)
+        @test isapprox(mc.W_down, W_down_expected, atol = 1e-10)
+    end
+
+
 end
