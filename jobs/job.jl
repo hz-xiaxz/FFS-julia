@@ -1,4 +1,4 @@
-#!/usr/bin/env -S julia --color=yes --startup-file=none
+#!/usr/bin/env -S julia --color=yes --startup-file=no
 
 using Carlo
 using Carlo.JobTools
@@ -12,12 +12,13 @@ tm.binsize = 100
 tm.t = 1.0
 tm.W = 1.0
 tm.U = 1.0
-tm.nx = 18
-tm.ny = 18
+tm.nx = 2
+tm.ny = 2
 ns = tm.nx * tm.ny
 tm.N_up = ns ÷ 2
 tm.N_down = ns ÷ 2
 tm.B = "Periodic"
+tm.g = 1.0
 
 if tm.B == "Periodic"
     lat = LatticeRectangular(tm.nx, tm.ny, Periodic())

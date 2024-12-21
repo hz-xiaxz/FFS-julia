@@ -120,7 +120,7 @@ Initialize the Monte Carlo object
     mc.model = AHmodel(
         lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     mc.g = params[:g]
-    mc.q = [2 * pi / nx, 2 * pi / ny]
+    mc.q = [2 * pi / params[:nx], 2 * pi / params[:ny]]
     mc.κup = FFS(mc.model.U_up)
     mc.κdown = FFS(mc.model.U_down)
     tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
@@ -168,7 +168,7 @@ end
     # sampling N_q
     nx = mc.model.lattice.nx
     ny = mc.model.lattice.ny
-    occ_2d = reshape(site_occupation(mc.κup) + site_occupation(mc.κdown), nx, ny)
+    occ_2d = reshape(site_occupation.(mc.κup) + site_occupation.(mc.κdown), nx, ny)
     nq = zero(ComplexF64)
     @inbounds for i in 1:nx
         @inbounds for j in 1:ny
