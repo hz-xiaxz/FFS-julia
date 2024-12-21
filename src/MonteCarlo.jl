@@ -4,9 +4,11 @@ Use Carlo.jl to perform high efficiency
 
 mutable struct MC{B} <: AbstractMC where {B}
     model::AHmodel{B}
-    conf::BitVector
+    κup::Vector{Int}
+    κdown::Vector{Int}
+    W_up::Matrix{Float64}
+    W_down::Matrix{Float64}
     g::Float64
-    OLbench::Float64
     q::Vector{Float64}
 end
 
@@ -23,22 +25,22 @@ Parameters:
 Returns:
 - A matrix of size (m × m) with same element type as U
 """
-function tilde_U(U::AbstractMatrix, kappa::Vector{Int})
+function tilde_U(U::AbstractMatrix, κ::Vector{Int})
     m = size(U, 2)
     n = size(U, 1)
     # check if kappa is valid
-    length(kappa) == n || throw(
+    length(κ) == n || throw(
         DimensionMismatch(
-        "Length of kappa ($(length(kappa))) must match number of rows in U ($n)",
+        "Length of kappa ($(length(κ))) must match number of rows in U ($n)",
     ),
     )
-    length(filter(x -> x != 0, kappa)) == m ||
-        throw(ArgumentError("kappa ($kappa) is not valid"))
+    length(filter(x -> x != 0, κ)) == m ||
+        throw(ArgumentError("kappa ($κ) is not valid"))
 
     # Create output matrix with same element type as U and requested size
     tilde_U = zeros(eltype(U), m, m)
 
-    @inbounds for (Rl, l) in enumerate(kappa)
+    @inbounds for (Rl, l) in enumerate(κ)
         if l != 0
             (1 ≤ l ≤ m) || throw(BoundsError(tilde_U, (l, :)))
             tilde_U[l, :] = U[Rl, :]
@@ -61,6 +63,18 @@ Throws:
     @inbounds return !iszero(kappa[l])
 end
 
+function reevaluateW!(mc::MC{B}) where {B}
+    tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
+    tilde_U_down = tilde_U(mc.model.U_down, mc.κdown)
+    U_upinvs = tilde_U_up \ I
+    U_downinvs = tilde_U_down \ I
+    mc.W_up = mc.model.U_up * U_upinvs
+    mc.W_down = mc.model.U_down * U_downinvs
+    return nothing
+end
+
+# Add max retries constant
+const MAX_INVERSION_RETRIES = 10
 """
     MC(params::AbstractDict)
 ------------
@@ -79,9 +93,12 @@ function MC(params::AbstractDict)
     lat = LatticeRectangular(params[:nx], params[:ny], B)
     model = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     g = params[:g]
-    OLbench = getOL(model, FFS(model.U_up), FFS(model.U_down), g)
     q = [2 * pi / nx, 2 * pi / ny]
-    return MC{B}(model, BitVector(zeros(2 * nx * ny)), g, OLbench, q)
+    κup = zeros(Int, lat.ns)
+    κdown = zeros(Int, lat.ns)
+    W_up = zeros(Float64, lat.ns, lat.ns)
+    W_down = zeros(Float64, lat.ns, lat.ns)
+    return MC{B}(model, κup, κdown, W_up, W_down, g, q)
 end
 
 """
@@ -100,24 +117,48 @@ Initialize the Monte Carlo object
 """
 @inline function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     lat = LatticeRectangular(params[:nx], params[:ny], B)
-    orb = AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
-    conf_up = FFS(ctx.rng, orb.U_up)
-    conf_down = FFS(ctx.rng, orb.U_down)
-    conf = vcat(conf_up, conf_down)
-    mc.model = orb
-    mc.conf = conf
+    mc.model = AHmodel(
+        lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
+    mc.g = params[:g]
+    mc.q = [2 * pi / nx, 2 * pi / ny]
+    mc.κup = FFS(mc.model.U_up)
+    mc.κdown = FFS(mc.model.U_down)
+    tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
+    tilde_U_down = tilde_U(mc.model.U_down, mc.κdown)
+    for attempt in 1:MAX_INVERSION_RETRIES
+        try
+            U_upinvs = tilde_U_up \ I
+            U_downinvs = tilde_U_down \ I
+            break  # Success - continue with these values
+        catch e
+            if e isa SingularException || e isa LinearAlgebra.LAPACKException
+                if attempt == MAX_INVERSION_RETRIES
+                    error("Matrix inversion failed after $MAX_INVERSION_RETRIES attempts. Please check configuration stability.")
+                end
+                # Regenerate configurations and update MC state
+                κup, κdown = FFS(model.U_up), FFS(model.U_down)
+                tilde_U_up = tilde_U(model.U_up, κup)
+                tilde_U_down = tilde_U(model.U_down, κdown)
+                continue
+            else
+                rethrow(e)  # If it's not a matrix inversion error,
+            end
+        end
+    end
+    mc.W_up = mc.model.U_up * U_upinvs
+    mc.W_down = mc.model.U_down * U_downinvs
+    return nothing
 end
 
 @inline function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
-    mc.conf = vcat(FFS(ctx.rng, mc.model.U_up), FFS(ctx.rng, mc.model.U_down))
+    mc.κup, mc.κdown = FFS(mc.model.U_up), FFS(mc.model.U_down)
+    reevaluateW!(mc)
     return nothing
 end
 
 @inline function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
-    conf_up = FFS(ctx.rng, mc.model.U_up)
-    conf_down = FFS(ctx.rng, mc.model.U_down)
-    OL = getOL(mc.model, conf_up, conf_down, mc.g)
-    Og = getOg(mc.model, conf_up, conf_down)
+    OL = getOL(mc.model, mc.κup, mc.κdown, mc.g, mc.W_up, mc.W_down)
+    Og = getOg(mc.model, mc.κup, mc.κdown)
     G = exp(mc.g * Og)
     if abs(OL) > 10 * abs(mc.OLbench)
         OL = mc.OLbench
@@ -132,7 +173,7 @@ end
     # sampling N_q
     nx = mc.model.lattice.nx
     ny = mc.model.lattice.ny
-    occ_2d = reshape(conf_up + conf_down, nx, ny)
+    occ_2d = reshape(site_occupation(mc.κup) + site_occupation(mc.κdown), nx, ny)
     nq = zero(ComplexF64)
     @inbounds for i in 1:nx
         @inbounds for j in 1:ny
@@ -190,13 +231,13 @@ Structure Factor in low momentum
 end
 
 @inline function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
-    out["conf"] = Vector{Bool}(mc.conf)
-    out["OLbench"] = mc.OLbench
+    out["kappa_up"] = mc.κup
+    out["kappa_down"] = mc.κdown
     return nothing
 end
 
 @inline function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
-    mc.conf = BitVector(read(in, "conf"))
-    out["OLbench"] = read(in, "OLbench")
+    mc.κup = read(in, "kappa_up")
+    mc.κdown = read(in, "kappa_down")
     return nothing
 end

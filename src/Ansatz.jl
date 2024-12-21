@@ -27,15 +27,6 @@ The Gutzwiller factor ratio for an electron hopping from site `R_l` to site `K(=
 \end{aligned}
 ```
 
-# Arguments
-- `κup::Vector{Int}`: Current configuration of up spins
-- `κdown::Vector{Int}`: Current configuration of down spins
-- `g::Float64`: Gutzwiller parameter
-- `n_mean::Float64`: Mean occupation number
-- `K::Int`: Target site index for the hop
-- `l::Int`: State label to be moved
-- `spin::Spin`: Spin species of the hopping electron
-
 # Returns
 - `ratio::Float64`: The ratio of new to old Gutzwiller factors
 
@@ -77,47 +68,11 @@ end
     return κ != 0 ? 1 : 0
 end
 
-# """
-#     fast_update(U::AbstractMatrix, Uinvs::AbstractMatrix, newconf::BitStr{N,T}, oldconf::BitStr{N,T}) where {N,T}
-
-# Fast computing technique from Becca and Sorella 2017
-# """
-# @inline function fast_update(
-#         U::AbstractMatrix,
-#         Uinvs::AbstractMatrix,
-#         newconf::Union{SubDitStr{D, N1, T1}, DitStr{D, N1, T1}},
-#         oldconf::BitStr{N, T}
-# ) where {D, N1, N, T, T1}
-#     @assert length(newconf)==N "The length of the new configuration should be the same as the old configuration, got: $(length(newconf))(old) and $N(new)"
-#     Rl = -1 # if not found should return error
-#     k = -1
-#     flag = 0
-#     @inbounds for i in 1:N
-#         if getindex(oldconf, i) == 1 && getindex(newconf, i) == 0
-#             Rl = i # the old position of the l-th electron
-#             flag += 1
-#         end
-#         if getindex(newconf, i) == 1 && getindex(oldconf, i) == 0
-#             k = i # the new position of the l-th electron, K = R_l'
-#             flag += 1
-#         end
-#         if flag == 2
-#             break
-#         end
-#     end
-#     if flag == 0
-#         return 1.0
-#     end
-#     l = sum(oldconf[1:Rl]) # l-th electron
-#     ratio = sum(U[k, :] .* Uinvs[:, l])
-#     return ratio
-# end
 
 @enum TermType Diagonal UpHop DownHop
 
 @doc raw"""
-    getOL(orb::AHmodel, κup::Vector{Int}, κdown::Vector{Int}, g::Float64,
-          Wup::AbstractMatrix{Float64}, Wdown::AbstractMatrix{Float64}) -> Float64
+    getOL(mc::MC{B}) -> Float64
 
 Compute the local energy ``O_L = \frac{⟨x|H|\psi_G⟩}{⟨x|\psi_G⟩}``.
 
@@ -126,27 +81,12 @@ This includes:
 2. Up-spin hopping terms
 3. Down-spin hopping terms
 
-# Arguments
-- `orb::AHmodel`: The Anderson-Hubbard model
-- `κup::Vector{Int}`: Current up-spin configuration
-- `κdown::Vector{Int}`: Current down-spin configuration
-- `g::Float64`: Gutzwiller parameter
-- `Wup::AbstractMatrix{Float64}`: Up-spin Slater determinant ratios
-- `Wdown::AbstractMatrix{Float64}`: Down-spin Slater determinant ratios
-
 # Returns
 - `OL::Float64`: The local energy
 """
-@inline function getOL(
-        orb::AHmodel{B},
-        κup::Vector{Int},
-        κdown::Vector{Int},
-        g::Float64,
-        Wup::AbstractMatrix{Float64},
-        Wdown::AbstractMatrix{Float64}
-) where {B}
+@inline function getOL(mc::MC{B}) where {B}
     # Get matrix elements of H
-    xprime = getxprime(orb, κup, κdown)
+    xprime = getxprime(mc.model, mc.κup, mc.κdown)
 
     # Initialize local energy
     OL = 0.0
@@ -159,11 +99,7 @@ This includes:
             term_type,
             coeff,
             key,
-            κup,
-            κdown,
-            g,
-            Wup,
-            Wdown
+            mc
         )
     end
 
@@ -186,20 +122,18 @@ end
         term_type::TermType,
         coeff::Float64,
         key::Tuple{Int, Int, Int, Int},
-        κup::Vector{Int},
-        κdown::Vector{Int},
-        g::Float64,
-        Wup::AbstractMatrix{Float64},
-        Wdown::AbstractMatrix{Float64}
-)::Float64
+        mc::MC{B}
+) where {B}
     if term_type == Diagonal
         return coeff
     elseif term_type == DownHop
         K, l = key[3], key[4]
-        return coeff * Wup[K, l] * fast_G_update(κup, κdown, g; K = K, l = l, spin = Down)
+        return coeff * mc.W_down[K, l] *
+               fast_G_update(mc.κup, mc.κdown, mc.g; K = K, l = l, spin = Down)
     else  # UpHop
         K, l = key[1], key[2]
-        return coeff * Wdown[K, l] * fast_G_update(κup, κdown, g; K = K, l = l, spin = Up)
+        return coeff * mc.W_up[K, l] *
+               fast_G_update(mc.κup, mc.κdown, mc.g; K = K, l = l, spin = Up)
     end
 end
 
@@ -212,13 +146,9 @@ const DIAGONAL_INDEX = -1
 The local operator to update the variational parameter `g`
 ``mathcal{O}_k(x)=\frac{\partial \ln \Psi_\alpha(x)}{\partial \alpha_k}``
 """
-@inline function getOg(
-        orbitals::AHmodel{B},
-        conf_up::BitVector,
-        conf_down::BitVector
-) where {B}
-    occupation = conf_up + conf_down
-    n_mean = (orbitals.N_up + orbitals.N_down) / orbitals.lattice.ns
+@inline function getOg(mc::MC{B}) where {B}
+    occupation = @. site_occupation(mc.κup) + site_occupation(mc.κdown)
+    n_mean = (mc.model.N_up + mc.model.N_down) / mc.model.lattice.ns
     Og = -1 / 2 * sum(@. (occupation - n_mean)^2)
     return Og
 end

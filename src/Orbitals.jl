@@ -1,4 +1,5 @@
 abstract type AbstractOrbitals end
+using FastFermionSampling: MC
 
 """
 Anderson-Hubbard Model

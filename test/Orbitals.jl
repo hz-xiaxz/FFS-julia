@@ -1,4 +1,4 @@
-using FastFermionSampling, BitBasis
+using FastFermionSampling
 using Test
 
 @testset "AHmodel" begin
