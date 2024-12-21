@@ -1,5 +1,4 @@
 abstract type AbstractOrbitals end
-using FastFermionSampling: MC
 
 """
 Anderson-Hubbard Model
@@ -123,7 +122,6 @@ function fixedAHmodel(
     # get sampling ensemble U_up and U_down
     H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
-    # eigen function may have numerical instability problem, see issue(#21)
     nev = max(N_up, N_down)
     decomp, history = ArnoldiMethod.partialschur(
         H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
