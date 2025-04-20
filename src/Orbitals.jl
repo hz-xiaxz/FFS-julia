@@ -98,7 +98,8 @@ function AHmodel(
     # note eigenvalues could be degenerate, so a better way is to use Arnoldi method
     # also Schur decomposition is more stable than eigen
     nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(
+    decomp,
+    history = ArnoldiMethod.partialschur(
         H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
@@ -123,7 +124,8 @@ function fixedAHmodel(
     H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
     nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(
+    decomp,
+    history = ArnoldiMethod.partialschur(
         H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
