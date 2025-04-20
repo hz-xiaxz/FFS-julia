@@ -218,7 +218,7 @@ end
 function hop!(mc::MC{B}, ctx::MCContext, neigh, ns, conf) where {B}
     occupied_sites = findall(x -> (x != 0), conf)
     i = rand(ctx.rng, occupied_sites)
-    site = sample(ctx.rng, neigh[i])
+    site = sample(ctx.rng, collect(neigh[i]))
     # i and site have same spin thus can't hop
     block_cond = (is_occupied(mc.κup, i) && is_occupied(mc.κup, site)) ||
                  (is_occupied(mc.κdown, i) && is_occupied(mc.κdown, site))
@@ -291,6 +291,7 @@ end
 
     measure!(ctx, :G2nqnmq, G^2 * abs2(nq))
     measure!(ctx, :G2nq, G^2 * nq)
+    measure!(ctx, :G2OL, G^2 * OL)
 
     return nothing
 end

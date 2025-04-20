@@ -12,9 +12,9 @@ using Logging
 
 nx = 4
 ny = 4
-SRsteps = 10
-g = 0.39118426172566841
-B = "Open"
+SRsteps = 100
+g = 0.155
+B = "Periodic"
 t = 1.0
 W = 1.0
 U = 1.0
@@ -29,9 +29,9 @@ else
     throw(ArgumentError("Boundary condition not recognized"))
 end
 model = FastFermionSampling.fixedAHmodel(lat, t, W, U, N_up, N_down)
-eta = 0.1
+eta = 0.02
 process_time = Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
-for _ in 1:SRsteps
+for t in 1:SRsteps
     tm = TaskMaker()
     tm.thermalization = 0
     tm.sweeps = 100000
@@ -50,8 +50,7 @@ for _ in 1:SRsteps
     task(tm)
 
     dir = @__DIR__
-    savepath = dir * "/../data/" * process_time *
-               "/$(tm.nx)x$(tm.ny)g=$(tm.g)"
+    savepath = dir * "/../data/" * "/$(tm.nx)x$(tm.ny)/$(t)+g=$(tm.g)"
     job = JobInfo(
         savepath,
         FastFermionSampling.MC;
@@ -68,10 +67,10 @@ for _ in 1:SRsteps
     # temporarily omit the discipline of `fg`
 
     fg = Measurements.value(df[!, :fg][1])
-    if abs(Measurements.uncertainty(df[!, :fg][1])) > abs(fg)
-        @warn "fg has big error"
-        break
-    end
+    # if abs(Measurements.uncertainty(df[!, :fg][1])) > abs(fg)
+    #     @warn "fg has big error"
+    #     break
+    # end
     fisherScalar = Measurements.value(df[!, :fisherScalar][1])
     global g
     g += eta * fg / fisherScalar
