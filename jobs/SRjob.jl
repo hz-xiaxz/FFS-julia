@@ -1,4 +1,4 @@
-#!/usr/bin/env -S julia --color=yes --startup-file=none
+#!/usr/bin/env -S julia --color=yes --startup-file=no
 #
 
 using Carlo
@@ -10,8 +10,8 @@ using Carlo.ResultTools
 using Measurements
 using Logging
 
-nx = 2
-ny = 2
+nx = 4
+ny = 4
 SRsteps = 10
 g = 0.39118426172566841
 B = "Open"

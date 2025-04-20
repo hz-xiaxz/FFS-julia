@@ -1,7 +1,3 @@
-"""
-Use Carlo.jl to perform high efficiency
-"""
-
 mutable struct MC{B} <: AbstractMC where {B}
     model::AHmodel{B}
     κup::Vector{Int}
@@ -48,6 +44,42 @@ function tilde_U(U::AbstractMatrix, κ::Vector{Int})
     end
 
     return tilde_U
+end
+
+
+"""
+    update_W_matrices(mc::MC; K_up::Int, K_down::Int, l_up::Int, l_down::Int)
+------------
+Update the W matrices
+"""
+function update_W_matrices!(mc::MC; K_up::Int, K_down::Int, l_up::Int, l_down::Int)
+    update_W!(mc.W_up; l = l_up, K = K_up)
+    update_W!(mc.W_down; l = l_down, K = K_down)
+end
+
+"""
+    update_W!(W::AbstractMatrix; l::Int, K::Int)
+------------
+Update the W matrix
+``W'_{I,j} = W_{I,j} - W_{I,l} / W_{K,l} * (W_{K,j} - \\delta_{l,j})``
+"""
+function update_W!(W::AbstractMatrix; l::Int, K::Int)
+    factors = W[:, l] ./ W[K, l]
+    Krow = copy(W[K, :])
+    Krow[l] -= 1.0
+    @views for j in axes(W, 2)
+        W[:, j] .-= factors .* Krow[j]
+    end
+    return nothing
+end
+
+function update_configurations!(
+        mc, i_up::Int, i_down::Int, K_up::Int, K_down::Int, l_up::Int, l_down::Int)
+    # Update W matrices
+    update_W_matrices!(mc; K_up = K_up, K_down = K_down, l_up = l_up, l_down = l_down)
+    # Update kappa configurations
+    mc.κup[i_up], mc.κup[K_up] = 0, l_up
+    mc.κdown[i_down], mc.κdown[K_down] = 0, l_down
 end
 
 """
@@ -100,6 +132,35 @@ function MC(params::AbstractDict)
     W_down = zeros(Float64, lat.ns, lat.ns)
     return MC{B}(model, κup, κdown, W_up, W_down, g, q)
 end
+"""
+    init_conf(rng::AbstractRNG, ns::Int, N_up::Int)
+
+initialize a half-filled configuration for this system
+"""
+function init_conf(rng::AbstractRNG, ns::Int, N_up::Int)
+    # dealing with conf_up
+    # Initialize array with zeros
+    κup = zeros(Int, ns)
+
+    # Generate random positions for 1:N_up
+    positions = randperm(rng, ns)[1:N_up]
+
+    # Place 1:N_up at the random positions
+    for (i, pos) in enumerate(positions)
+        κup[pos] = i
+    end
+    κdown = zeros(Int, ns)
+    # κdown should occupy the rest of the sites
+    res_pos = randperm(rng, ns - N_up)
+    for i in 1:ns
+        if κup[i] == 0
+            κdown[i] = pop!(res_pos)
+        end
+    end
+
+    return κup, κdown
+end
+
 
 """
     Carlo.init!(mc::MC, ctx::MCContext, params::AbstractDict)
@@ -121,10 +182,13 @@ Initialize the Monte Carlo object
         lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     mc.g = params[:g]
     mc.q = [2 * pi / params[:nx], 2 * pi / params[:ny]]
-    mc.κup = FFS(mc.model.U_up)
-    mc.κdown = FFS(mc.model.U_down)
+    mc.κup, mc.κdown = init_conf(ctx.rng, lat.ns, params[:N_up])
     tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
     tilde_U_down = tilde_U(mc.model.U_down, mc.κdown)
+    N_up = params[:N_up]
+    N_down = params[:N_down]
+    U_upinvs = zeros(eltype(mc.model.U_up), N_up, N_up)
+    U_downinvs = zeros(eltype(mc.model.U_down), N_down, N_down)
     for attempt in 1:MAX_INVERSION_RETRIES
         try
             U_upinvs = tilde_U_up \ I
@@ -136,7 +200,7 @@ Initialize the Monte Carlo object
                     error("Matrix inversion failed after $MAX_INVERSION_RETRIES attempts. Please check configuration stability.")
                 end
                 # Regenerate configurations and update MC state
-                κup, κdown = FFS(model.U_up), FFS(model.U_down)
+                mc.κup, mc.κdown = init_conf(ctx.rng, lat.ns, params[:N_up])
                 tilde_U_up = tilde_U(model.U_up, κup)
                 tilde_U_down = tilde_U(model.U_down, κdown)
                 continue
@@ -145,12 +209,61 @@ Initialize the Monte Carlo object
             end
         end
     end
+    # calculate W_up and W_down
+    mc.W_up = mc.model.U_up * U_upinvs
+    mc.W_down = mc.model.U_down * U_downinvs
     return nothing
 end
 
+function hop!(mc::MC{B}, ctx::MCContext, neigh, ns, conf) where {B}
+    occupied_sites = findall(x -> (x != 0), conf)
+    i = rand(ctx.rng, occupied_sites)
+    site = sample(ctx.rng, neigh[i])
+    # i and site have same spin thus can't hop
+    block_cond = (is_occupied(mc.κup, i) && is_occupied(mc.κup, site)) ||
+                 (is_occupied(mc.κdown, i) && is_occupied(mc.κdown, site))
+    block_cond, i, site
+end
+
 @inline function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
-    mc.κup, mc.κdown = FFS(mc.model.U_up), FFS(mc.model.U_down)
-    reevaluateW!(mc)
+    neigh = mc.model.lattice.neigh
+    ns = mc.model.lattice.ns
+    r = rand(ctx.rng)
+    block_cond_up, i_up, site_up = hop!(mc, ctx, neigh, ns, mc.κup)
+    block_cond_down, i_down, site_down = hop!(mc, ctx, neigh, ns, mc.κdown)
+    # Check if both hops are blocked
+    if block_cond_up || block_cond_down
+        measure!(ctx, :acc, 0.0)
+        return nothing
+    end
+    # Calculate ratio based on selected move
+    l_up = mc.κup[i_up]
+    l_down = mc.κdown[i_down]
+
+    # Calculate acceptance ratio
+    ratio = mc.W_up[site_up, l_up] * mc.W_down[site_down, l_down]
+    if ratio^2 >= 1
+        update_configurations!(mc, i_up, i_down, site_up, site_down, l_up, l_down)
+        measure!(ctx, :acc, 1.0)
+    elseif ratio^2 < 1 && r < ratio^2
+        update_configurations!(mc, i_up, i_down, site_up, site_down, l_up, l_down)
+        measure!(ctx, :acc, 1.0)
+    else
+        measure!(ctx, :acc, 0.0)
+    end
+
+    # Re-evaluate W matrices periodically
+    n_occupied = min(count(!iszero, mc.κup), count(!iszero, mc.κdown))
+    if ctx.sweeps % n_occupied == 0
+        try
+            reevaluateW!(mc)
+        catch e
+            if e isa LinearAlgebra.SingularException
+                @warn "lu factorization failed, aborting re-evaluation..."
+                throw(e)
+            end
+        end
+    end
     return nothing
 end
 
@@ -226,13 +339,13 @@ Structure Factor in low momentum
 end
 
 @inline function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
-    out["kappa_up"] = mc.κup
-    out["kappa_down"] = mc.κdown
+    out["κup"] = mc.κup
+    out["κdown"] = mc.κdown
     return nothing
 end
 
 @inline function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
-    mc.κup = read(in, "kappa_up")
-    mc.κdown = read(in, "kappa_down")
+    mc.κup = read(in, "κup")
+    mc.κdown = read(in, "κdown")
     return nothing
 end
