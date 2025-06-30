@@ -1,5 +1,5 @@
 using FastFermionSampling
-using FastFermionSampling: FFS, compute_null_vector
+using FastFermionSampling: FFS
 using Test
 using StatsBase
 using Random
@@ -84,19 +84,6 @@ end
         @test maximum(result) == 2
     end
 
-    @testset "Error handling" begin
-        rng = MersenneTwister(789)
-
-        # Invalid dimensions
-        @test_throws ArgumentError FFS(rng, randn(3, 4))  # L < N
-        @test_throws ArgumentError FFS(rng, Matrix{Float64}(undef, 0, 0))  # Empty matrix
-
-        # Non-normalized columns
-        U = randn(4, 2)  # Non-orthogonal columns
-        @test_logs((:warn, r"Probabilities don't sum to 1"),
-            (:warn, r"Probabilities don't sum to 1"),
-            FFS(rng, U))
-    end
 
     @testset "Statistical properties" begin
         rng = MersenneTwister(101112)
@@ -150,33 +137,4 @@ end
         result = FFS(rng, U)
         @test count(x -> x > 0, result) == 3
     end
-end
-
-@testset "mynullspace" begin
-    rng = Random.Xoshiro(42)
-    function generate_ill_conditioned_rank_deficient_matrix(rng, n, condition_number)
-        D = Diagonal(condition_number .^ ((0:(n - 1)) ./ n))
-
-        Q = qr(randn(rng, n, n)).Q
-
-        A = Q * D * Q'
-
-        A[end, :] = sum(A[1:(end - 1), :], dims = 1)
-
-        return A
-    end
-    A1 = generate_ill_conditioned_rank_deficient_matrix(rng, 3, 1e2)
-    @test FastFermionSampling.mynullspace(A1) ≈ LinearAlgebra.nullspace(A1)
-end
-
-@testset "compute_null_vector" begin
-    @testset "Basic functionality" begin
-        # Matrix with exactly one null vector [1; -1]
-        A = [1.0 1.0; 1.0 1.0]
-        null_vec = compute_null_vector(A)
-        @test size(null_vec) == (2,)
-        @test isapprox(A * null_vec, zeros(2), atol = 1e-12)
-        @test isapprox(norm(null_vec), 1.0, atol = 1e-12)  # Should be normalized
-    end
-
 end

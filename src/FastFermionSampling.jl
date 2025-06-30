@@ -6,7 +6,6 @@ using StatsBase
 using LinearAlgebra
 using Carlo
 using HDF5
-using GenericLinearAlgebra
 using SparseArrays
 using ArnoldiMethod
 
