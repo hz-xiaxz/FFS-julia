@@ -1,4 +1,4 @@
-#!/usr/bin/env -S julia --color=yes --startup-file=no
+#!/usr/bin/env -S julia --project --color=yes --startup-file=no
 
 using Carlo
 using Carlo.JobTools
