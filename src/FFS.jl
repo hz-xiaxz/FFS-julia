@@ -30,6 +30,7 @@ Employs the Fast Fermion Sampling Algorithm to sample free fermion states.
     probs = abs2.(U[:, 1])
     sampled_state = sample(rng, state_indices, Weights(probs))
     κ[sampled_state] = 1
+    available[sampled_state] = false
     push!(sampled_indices, sampled_state)
     null_vector = normalize([-U[sampled_state, 2] / U[sampled_state, 1], 1])
     @inbounds for i in 2:(N - 1)
