@@ -100,7 +100,7 @@ function AHmodel(
     nev = max(N_up, N_down)
     decomp,
     history = ArnoldiMethod.partialschur(
-        H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
+        H_mat_sparse, nev = nev, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     if !check_shell(diag(decomp.R), N_up, lattice.ns)
@@ -126,7 +126,7 @@ function fixedAHmodel(
     nev = max(N_up, N_down)
     decomp,
     history = ArnoldiMethod.partialschur(
-        H_mat_sparse, nev = nev, tol = 1e-14, which = :SR)
+        H_mat_sparse, nev = nev, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)

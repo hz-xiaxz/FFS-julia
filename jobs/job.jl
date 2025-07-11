@@ -10,10 +10,10 @@ tm.thermalization = 0
 tm.sweeps = 100000
 tm.binsize = 100
 tm.t = 1.0
-tm.W = 1.0
+tm.W = 0.0
 tm.U = 1.0
-tm.nx = 2
-tm.ny = 2
+tm.nx = 4
+tm.ny = 4
 ns = tm.nx * tm.ny
 tm.N_up = ns ÷ 2
 tm.N_down = ns ÷ 2
@@ -34,7 +34,7 @@ task(tm, omega = model.omega)
 
 dir = @__DIR__
 # savepath = dir * "/../data/" * Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
-savepath = dir * "/../data/" * "mpirun$(tm.nx)x$(tm.ny)"
+savepath = dir * "/../data/" * "run$(tm.nx)x$(tm.ny)"
 job = JobInfo(
     savepath,
     FastFermionSampling.MC;
