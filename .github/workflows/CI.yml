@@ -24,7 +24,7 @@ jobs:
         with:
           version: ${{ matrix.julia-version }}
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install JuliaFormatter and format
         # This will use the latest version by default but you can set the version like so:
         #
@@ -62,7 +62,7 @@ jobs:
           - x64
           - x86
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
@@ -84,7 +84,7 @@ jobs:
       contents: write
       statuses: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
         with:
           version: "1"
