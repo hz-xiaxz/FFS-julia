@@ -62,7 +62,7 @@ function check_shell(E::AbstractArray, Nup::Int, ns::Int)
     # iteratively find degenerate spaces
     start_shell = 1
     while start_shell < length(E)
-        num = findlast(x -> isapprox(x, E[start_shell], atol = 1e-10), E)
+        num = findlast(x -> isapprox(x, E[start_shell]), E)
         push!(shell_pool, (start_shell, num))
         start_shell = num + 1
     end
@@ -71,7 +71,11 @@ function check_shell(E::AbstractArray, Nup::Int, ns::Int)
         x -> (x[1] <= Nup && x[2] > Nup) || (x[1] <= (ns - Nup) && x[2] > (ns - Nup)),
         shell_pool
     )
-    return isempty(shell)
+    if !isempty(shell)
+        @show shell
+        @show E[shell[1][1]:shell[1][2]]
+    end
+    isempty(shell)
 end
 
 """

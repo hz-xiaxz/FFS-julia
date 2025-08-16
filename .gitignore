@@ -12,3 +12,5 @@ env
 node_modules
 data/*
 tmp/*
+jobs/*
+pluto/*
