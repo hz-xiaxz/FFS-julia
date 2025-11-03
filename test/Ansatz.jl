@@ -1,8 +1,8 @@
 using Test
 using FastFermionSampling
 using LinearAlgebra
-using FastFermionSampling: Spin, Up, Down, getOL, compute_contribution, classify_term,
-                           site_occupation
+using FastFermionSampling:
+    Spin, Up, Down, getOL, compute_contribution, classify_term, site_occupation
 
 @testset "Gutzwiller" begin
     g = 1.0
@@ -11,8 +11,17 @@ using FastFermionSampling: Spin, Up, Down, getOL, compute_contribution, classify
     κup = [1, 0, 2, 0]
     κdown = [0, 1, 0, 2]
     ansatz = FastFermionSampling.Gutzwiller(g)
-    params = Dict(:nx => 2, :ny => 2, :B => "Periodic", :t => 1.0,
-        :W => 1.0, :U => 1.0, :N_up => 2, :N_down => 2, :g => 1.0)
+    params = Dict(
+        :nx => 2,
+        :ny => 2,
+        :B => "Periodic",
+        :t => 1.0,
+        :W => 1.0,
+        :U => 1.0,
+        :N_up => 2,
+        :N_down => 2,
+        :g => 1.0,
+    )
     mc = MC(params)
     mc.κup = κup
     mc.κdown = κdown
@@ -82,7 +91,13 @@ end
 
         # Test mismatched configuration lengths
         @test_throws AssertionError fast_G_update(
-            κup[1:3], κdown, g; K = 2, l = 1, spin = Up)
+            κup[1:3],
+            κdown,
+            g;
+            K = 2,
+            l = 1,
+            spin = Up,
+        )
 
     end
 end
@@ -97,8 +112,17 @@ end
 
 @testset "Local Energy and Parameter Gradient" begin
     # Setup common test data
-    params = Dict(:nx => 2, :ny => 2, :B => "Periodic", :t => 1.0,
-        :W => 1.0, :U => 1.0, :N_up => 2, :N_down => 2, :g => 1.0)
+    params = Dict(
+        :nx => 2,
+        :ny => 2,
+        :B => "Periodic",
+        :t => 1.0,
+        :W => 1.0,
+        :U => 1.0,
+        :N_up => 2,
+        :N_down => 2,
+        :g => 1.0,
+    )
     test_mc = MC(params)
 
     @testset "classify_term" begin
@@ -121,20 +145,17 @@ end
 
         # Test diagonal term
         diag_key = (-1, -1, -1, -1)
-        @test compute_contribution(
-            FastFermionSampling.Diagonal, 2.0, diag_key, mc1) ≈ 2.0
+        @test compute_contribution(FastFermionSampling.Diagonal, 2.0, diag_key, mc1) ≈ 2.0
 
         # Test down hopping term
         down_key = (-1, -1, 1, 2)
-        down_contrib = compute_contribution(
-            FastFermionSampling.DownHop, 1.0, down_key, mc1)
+        down_contrib = compute_contribution(FastFermionSampling.DownHop, 1.0, down_key, mc1)
         @test typeof(down_contrib) == Float64
         @test !isnan(down_contrib)
 
         # Test up hopping term
         up_key = (1, 2, -1, -1)
-        up_contrib = compute_contribution(
-            FastFermionSampling.UpHop, 1.0, up_key, mc1)
+        up_contrib = compute_contribution(FastFermionSampling.UpHop, 1.0, up_key, mc1)
         @test typeof(up_contrib) == Float64
         @test !isnan(up_contrib)
     end

@@ -33,13 +33,13 @@ The Gutzwiller factor ratio for an electron hopping from site `R_l` to site `K(=
 # Throws
 - `ArgumentError`: If indices are invalid or state not found
 """
-@inline function fast_G_update(
-        κup::Vector{Int},
-        κdown::Vector{Int},
-        g::Float64;
-        K::Int,
-        l::Int,
-        spin::Spin
+function fast_G_update(
+    κup::Vector{Int},
+    κdown::Vector{Int},
+    g::Float64;
+    K::Int,
+    l::Int,
+    spin::Spin,
 )
     # Input validation
     num_sites = length(κup)
@@ -64,7 +64,7 @@ end
 
 
 """Calculate electron occupation (0 or 1) at a site."""
-@inline function site_occupation(κ::Int)::Int
+function site_occupation(κ::Int)::Int
     return κ != 0 ? 1 : 0
 end
 
@@ -84,7 +84,7 @@ This includes:
 # Returns
 - `OL::Float64`: The local energy
 """
-@inline function getOL(mc::MC{B}) where {B}
+function getOL(mc::MC{B}) where {B}
     # Get matrix elements of H
     xprime = getxprime(mc.model, mc.κup, mc.κdown)
 
@@ -92,22 +92,17 @@ This includes:
     OL = 0.0
 
     # Process each term in the Hamiltonian
-    @inbounds for (key, coeff) in pairs(xprime)
+    for (key, coeff) in pairs(xprime)
         term_type = classify_term(key)
 
-        OL += compute_contribution(
-            term_type,
-            coeff,
-            key,
-            mc
-        )
+        OL += compute_contribution(term_type, coeff, key, mc)
     end
 
     return OL
 end
 
 """Classify the type of Hamiltonian term based on its key."""
-@inline function classify_term(key::Tuple{Int, Int, Int, Int})::TermType
+function classify_term(key::Tuple{Int,Int,Int,Int})::TermType
     if all(==(DIAGONAL_INDEX), key)
         return Diagonal
     elseif key[1] == DIAGONAL_INDEX && key[2] == DIAGONAL_INDEX
@@ -118,21 +113,23 @@ end
 end
 
 """Compute contribution to local energy from a specific term."""
-@inline function compute_contribution(
-        term_type::TermType,
-        coeff::Float64,
-        key::Tuple{Int, Int, Int, Int},
-        mc::MC{B}
+function compute_contribution(
+    term_type::TermType,
+    coeff::Float64,
+    key::Tuple{Int,Int,Int,Int},
+    mc::MC{B},
 ) where {B}
     if term_type == Diagonal
         return coeff
     elseif term_type == DownHop
         K, l = key[3], key[4]
-        return coeff * mc.W_down[K, l] *
+        return coeff *
+               mc.W_down[K, l] *
                fast_G_update(mc.κup, mc.κdown, mc.g; K = K, l = l, spin = Down)
     else  # UpHop
         K, l = key[1], key[2]
-        return coeff * mc.W_up[K, l] *
+        return coeff *
+               mc.W_up[K, l] *
                fast_G_update(mc.κup, mc.κdown, mc.g; K = K, l = l, spin = Up)
     end
 end
@@ -146,7 +143,7 @@ const DIAGONAL_INDEX = -1
 The local operator to update the variational parameter `g`
 ``mathcal{O}_k(x)=\frac{\partial \ln \Psi_\alpha(x)}{\partial \alpha_k}``
 """
-@inline function getOg(mc::MC{B}) where {B}
+function getOg(mc::MC{B}) where {B}
     occupation = @. site_occupation(mc.κup) + site_occupation(mc.κdown)
     n_mean = (mc.model.N_up + mc.model.N_down) / mc.model.lattice.ns
     Og = -1 / 2 * sum(@. (occupation - n_mean)^2)

@@ -32,11 +32,11 @@ end
 Get the non-interacting Anderson model Hamiltonian Matrix to construct Slater Determinants
 """
 function getHmat(
-        lattice::LatticeRectangular{B},
-        t::Float64,
-        omega::Vector{Float64},
-        N_up::Int,
-        N_down::Int
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    omega::Vector{Float64},
+    N_up::Int,
+    N_down::Int,
 ) where {B}
     ns = lattice.ns
     N = N_up + N_down
@@ -69,7 +69,7 @@ function check_shell(E::AbstractArray, Nup::Int, ns::Int)
     # the number of N_up and N_down should be at least > num
     shell = filter(
         x -> (x[1] <= Nup && x[2] > Nup) || (x[1] <= (ns - Nup) && x[2] > (ns - Nup)),
-        shell_pool
+        shell_pool,
     )
     return isempty(shell)
 end
@@ -82,12 +82,12 @@ Generate Anderson-Hubbard model and get the sampling ensemble
 Raise warning if the shell of degenerate eigenstates are not whole-filled
 """
 function AHmodel(
-        lattice::LatticeRectangular{B},
-        t::Float64,
-        W::Float64,
-        U::Float64,
-        N_up::Int,
-        N_down::Int
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    W::Float64,
+    U::Float64,
+    N_up::Int,
+    N_down::Int,
 ) where {B}
     omega = randn(Float64, lattice.ns) * W / 2
     # omega = ones(Float64, lattice.ns) * W / 2
@@ -98,9 +98,7 @@ function AHmodel(
     # note eigenvalues could be degenerate, so a better way is to use Arnoldi method
     # also Schur decomposition is more stable than eigen
     nev = max(N_up, N_down)
-    decomp,
-    history = ArnoldiMethod.partialschur(
-        H_mat_sparse, nev = nev, which = :SR)
+    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev = nev, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     if !check_shell(diag(decomp.R), N_up, lattice.ns)
@@ -111,12 +109,12 @@ end
 
 # this function is for debugging
 function fixedAHmodel(
-        lattice::LatticeRectangular{B},
-        t::Float64,
-        W::Float64,
-        U::Float64,
-        N_up::Int,
-        N_down::Int
+    lattice::LatticeRectangular{B},
+    t::Float64,
+    W::Float64,
+    U::Float64,
+    N_up::Int,
+    N_down::Int,
 ) where {B}
     omega = zeros(Float64, lattice.ns) * W / 2
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
@@ -124,9 +122,7 @@ function fixedAHmodel(
     H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
     nev = max(N_up, N_down)
-    decomp,
-    history = ArnoldiMethod.partialschur(
-        H_mat_sparse, nev = nev, which = :SR)
+    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev = nev, which = :SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
@@ -141,7 +137,7 @@ function getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int}) wher
     @assert length(κup)==length(κdown) "Length of κ↑ and κ↓ should match the number of sites"
 
     # Initialize result dictionary with better key type
-    xprime = Dict{Tuple{Int, Int, Int, Int}, Float64}()
+    xprime = Dict{Tuple{Int,Int,Int,Int},Float64}()
 
     # Add different contributions
     add_onsite_terms!(xprime, orb, κup, κdown)
@@ -154,12 +150,12 @@ end
 
 """Add on-site energy terms"""
 function add_onsite_terms!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        orb::AHmodel{B},
-        κup::Vector{Int},
-        κdown::Vector{Int}
+    xprime::Dict{Tuple{Int,Int,Int,Int},Float64},
+    orb::AHmodel{B},
+    κup::Vector{Int},
+    κdown::Vector{Int},
 ) where {B}
-    @inbounds for i in 1:(orb.lattice.ns)
+    for i = 1:(orb.lattice.ns)
         if is_occupied(κup, i)
             add_diagonal_term!(xprime, orb.omega[i])
         end
@@ -172,12 +168,12 @@ end
 
 """Add Hubbard interaction terms"""
 function add_hubbard_terms!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        orb::AHmodel{B},
-        κup::Vector{Int},
-        κdown::Vector{Int}
+    xprime::Dict{Tuple{Int,Int,Int,Int},Float64},
+    orb::AHmodel{B},
+    κup::Vector{Int},
+    κdown::Vector{Int},
 ) where {B}
-    @inbounds for i in 1:(orb.lattice.ns)
+    for i = 1:(orb.lattice.ns)
         if is_occupied(κup, i) && is_occupied(κdown, i)
             add_diagonal_term!(xprime, orb.U)
         end
@@ -185,10 +181,7 @@ function add_hubbard_terms!(
 end
 
 """Add a diagonal term to the Hamiltonian"""
-function add_diagonal_term!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        energy::Float64
-)
+function add_diagonal_term!(xprime::Dict{Tuple{Int,Int,Int,Int},Float64}, energy::Float64)
     key = (-1, -1, -1, -1)
     xprime[key] = get!(xprime, key, 0.0) + energy
 end
@@ -197,10 +190,10 @@ end
 
 """Add hopping terms for both spin species"""
 function add_hopping_terms!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        orb::AHmodel{B},
-        κup::Vector{Int},
-        κdown::Vector{Int}
+    xprime::Dict{Tuple{Int,Int,Int,Int},Float64},
+    orb::AHmodel{B},
+    κup::Vector{Int},
+    κdown::Vector{Int},
 ) where {B}
     add_spin_hopping!(xprime, orb, κup, Up)
     add_spin_hopping!(xprime, orb, κdown, Down)
@@ -208,12 +201,12 @@ end
 
 """Add hopping terms for a specific spin"""
 function add_spin_hopping!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        orb::AHmodel{B},
-        κ::Vector{Int},
-        spin::Spin
+    xprime::Dict{Tuple{Int,Int,Int,Int},Float64},
+    orb::AHmodel{B},
+    κ::Vector{Int},
+    spin::Spin,
 ) where {B}
-    @inbounds for (site, occupation) in enumerate(κ)
+    for (site, occupation) in enumerate(κ)
         iszero(occupation) && continue
 
         for neighbor in orb.lattice.neigh[site]
@@ -228,11 +221,11 @@ end
 
 """Add a single hopping term to the Hamiltonian"""
 function add_hop!(
-        xprime::Dict{Tuple{Int, Int, Int, Int}, Float64},
-        K::Int,
-        l::Int,
-        spin::Spin,
-        energy::Float64
+    xprime::Dict{Tuple{Int,Int,Int,Int},Float64},
+    K::Int,
+    l::Int,
+    spin::Spin,
+    energy::Float64,
 )
     key = if spin == Up
         (K, l, -1, -1)

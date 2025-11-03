@@ -10,7 +10,7 @@ function run(MCsteps::Int, Lx::Int, Ly::Int)
     N = Lx * Ly ÷ 2 # number of particles
     orb = FastFermionSampling.fixedAHmodel(lat, 1.0, 1.0, 1.0, N, N)
     sm = zeros(Float64, MCsteps)
-    for i in 1:MCsteps
+    for i = 1:MCsteps
         conf_up = FFS(orb.U_up)
         conf_down = FFS(orb.U_down)
         OL = FastFermionSampling.getOL(orb, conf_up, conf_down, 0.3)

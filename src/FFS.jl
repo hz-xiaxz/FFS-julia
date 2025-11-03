@@ -17,7 +17,7 @@ Employs the Fast Fermion Sampling Algorithm to sample free fermion states.
 - `ArgumentError`: If matrix dimensions are invalid or N ≤ 0
 - `LinearAlgebra.SingularException`: If null space calculation fails
 """
-@inline function FFS(rng::AbstractRNG, ensemble_matrix::AbstractMatrix)
+function FFS(rng::AbstractRNG, ensemble_matrix::AbstractMatrix)
     L, N = size(ensemble_matrix)
     perm = randperm(rng, N)
     U = ensemble_matrix[:, perm]
@@ -33,8 +33,8 @@ Employs the Fast Fermion Sampling Algorithm to sample free fermion states.
     available[sampled_state] = false
     push!(sampled_indices, sampled_state)
     null_vector = normalize([-U[sampled_state, 2] / U[sampled_state, 1], 1])
-    @inbounds for i in 2:(N - 1)
-        prob = abs2.((view(U, :, 1:i) * null_vector)[available])
+    for i = 2:(N-1)
+        prob = abs2.((view(U, :, 1:i)*null_vector)[available])
         sampled_state = sample(rng, state_indices[available], Weights(prob))
         κ[sampled_state] = i
         available[sampled_state] = false
@@ -42,10 +42,10 @@ Employs the Fast Fermion Sampling Algorithm to sample free fermion states.
         # now compute next n_vec
         # I suggest not using the gaussian elimination
         U_x = U[sampled_indices, 1:i]
-        B = -U[1:i, i + 1]
+        B = -U[1:i, i+1]
         null_vector = normalize([U_x \ B; 1])
     end
-    prob = abs2.((view(U, :, 1:N) * null_vector)[available])
+    prob = abs2.((view(U, :, 1:N)*null_vector)[available])
     sampled_state = sample(rng, state_indices[available], Weights(prob))
     κ[sampled_state] = N
     return κ

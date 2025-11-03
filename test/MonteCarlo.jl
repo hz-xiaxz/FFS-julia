@@ -5,9 +5,11 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
 @testset "tilde_U tests" begin
     @testset "Basic functionality" begin
         # Create a simple test matrix
-        U = [1.0 2.0 3.0
-             4.0 5.0 6.0
-             7.0 8.0 9.0]
+        U = [
+            1.0 2.0 3.0
+            4.0 5.0 6.0
+            7.0 8.0 9.0
+        ]
         kappa = [2, 3, 1]
 
         result = tilde_U(U, kappa)
@@ -22,8 +24,10 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
     end
 
     @testset "Zero kappa entries" begin
-        U = [1.0 2.0
-             3.0 4.0]
+        U = [
+            1.0 2.0
+            3.0 4.0
+        ]
         kappa = [0, 0]
 
         @test_throws ArgumentError tilde_U(U, kappa)
@@ -31,9 +35,11 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
 
     @testset "Different matrix shapes" begin
         # Test with rectangular matrix
-        U = [1.0 2.0
-             3.0 4.0
-             5.0 6.0]
+        U = [
+            1.0 2.0
+            3.0 4.0
+            5.0 6.0
+        ]
         kappa = [1, 0, 2]
 
         result = tilde_U(U, kappa)
@@ -44,8 +50,10 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
     end
 
     @testset "Complex numbers" begin
-        U = [1.0+im 2.0+2im
-             3.0+3im 4.0+4im]
+        U = [
+            1.0+im 2.0+2im
+            3.0+3im 4.0+4im
+        ]
         kappa = [2, 1]
 
         result = tilde_U(U, kappa)
@@ -69,8 +77,10 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
     end
 
     @testset "Input preservation" begin
-        U = [1.0 2.0
-             3.0 4.0]
+        U = [
+            1.0 2.0
+            3.0 4.0
+        ]
         U_original = copy(U)
         kappa = [1, 2]
         kappa_original = copy(kappa)
@@ -83,8 +93,10 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
     end
 
     @testset "Invalid inputs" begin
-        U = [1.0 2.0
-             3.0 4.0]
+        U = [
+            1.0 2.0
+            3.0 4.0
+        ]
 
         # Test kappa with invalid indices
         @test_throws BoundsError tilde_U(U, [3, 1])  # Index 3 is out of bounds
@@ -94,8 +106,10 @@ using FastFermionSampling: MC, tilde_U, reevaluateW!
     end
 
     @testset "Type stability" begin
-        U = [1.0 2.0
-             3.0 4.0]
+        U = [
+            1.0 2.0
+            3.0 4.0
+        ]
         kappa = [1, 2]
 
         # Test that output type matches input type
@@ -116,8 +130,15 @@ end
         kappa_down = [2, 0, 1, 0]
         lat = LatticeRectangular(2, 2, Periodic())
         model = AHmodel(lat, 1.0, 1.0, 1.0, 2, 2)
-        mc = MC(model, kappa_up, kappa_down, zeros(2, 2),
-            zeros(2, 2), 1.0, [2 * pi / 2, 2 * pi / 2])
+        mc = MC(
+            model,
+            kappa_up,
+            kappa_down,
+            zeros(2, 2),
+            zeros(2, 2),
+            1.0,
+            [2 * pi / 2, 2 * pi / 2],
+        )
 
         reevaluateW!(mc)
 

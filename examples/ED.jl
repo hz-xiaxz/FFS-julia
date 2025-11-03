@@ -11,7 +11,7 @@ function doED()
     lattice = Lattice(unitcell, (4, 4))
 
     # define the Hilbert space (single-orbital spin-1/2 complex fermion)
-    hilbert = Hilbert(site => Fock{:f}(1, 2) for site in 1:length(lattice))
+    hilbert = Hilbert(site => Fock{:f}(1, 2) for site = 1:length(lattice))
 
     # define the quantum number of the sub-Hilbert space in which the computation to be carried out
     # here the particle number is set to be `length(lattice)` and Sz is set to be 0

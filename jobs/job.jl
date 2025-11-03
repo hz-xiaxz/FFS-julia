@@ -40,7 +40,7 @@ job = JobInfo(
     FastFermionSampling.MC;
     tasks = make_tasks(tm),
     checkpoint_time = "5:00",
-    run_time = "24:00:00"
+    run_time = "24:00:00",
 )
 
 Carlo.start(job, ARGS)

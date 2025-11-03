@@ -31,7 +31,7 @@ end
 model = FastFermionSampling.fixedAHmodel(lat, t, W, U, N_up, N_down)
 eta = 0.1
 process_time = Dates.format(Dates.now(), "mm-ddTHH-MM-SS")
-for _ in 1:SRsteps
+for _ = 1:SRsteps
     tm = TaskMaker()
     tm.thermalization = 0
     tm.sweeps = 100000
@@ -50,14 +50,13 @@ for _ in 1:SRsteps
     task(tm)
 
     dir = @__DIR__
-    savepath = dir * "/../data/" * process_time *
-               "/$(tm.nx)x$(tm.ny)g=$(tm.g)"
+    savepath = dir * "/../data/" * process_time * "/$(tm.nx)x$(tm.ny)g=$(tm.g)"
     job = JobInfo(
         savepath,
         FastFermionSampling.MC;
         tasks = make_tasks(tm),
         checkpoint_time = "30:00",
-        run_time = "24:00:00"
+        run_time = "24:00:00",
     )
     Carlo.cli_delete(job, Dict())
     with_logger(Carlo.default_logger()) do

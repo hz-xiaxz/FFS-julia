@@ -33,11 +33,11 @@ end
 function getKLdiv(L::Int, N::Int, iter_time::Int, U::Matrix{Float64})
     # caculate the KL divergence between the exact sample and the FFS
     events, p = exact_sample(U, L, N)
-    sampled = Dict{Int, Float64}()
+    sampled = Dict{Int,Float64}()
     for (i, ev) in enumerate(events)
         sampled[evalpoly(2, reverse(ev))] = 1e-8# for KL-div not blowing up
     end
-    for i in 1:iter_time
+    for i = 1:iter_time
         sampled[evalpoly(2, reverse(FFS(U)))] += 1
     end
     q = zeros(Float64, length(keys(sampled)))
@@ -92,7 +92,7 @@ end
 
         # Run multiple samples
         n_samples = 1000
-        samples = [FFS(rng, U) for _ in 1:n_samples]
+        samples = [FFS(rng, U) for _ = 1:n_samples]
 
         # Check that all samples have correct number of occupied states
         @test all(x -> count(y -> y > 0, x) == N, samples)

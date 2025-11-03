@@ -31,16 +31,15 @@ function tilde_U(U::AbstractMatrix, κ::Vector{Int})
     # check if kappa is valid
     length(κ) == n || throw(
         DimensionMismatch(
-        "Length of kappa ($(length(κ))) must match number of rows in U ($n)",
-    ),
+            "Length of kappa ($(length(κ))) must match number of rows in U ($n)",
+        ),
     )
-    length(filter(x -> x != 0, κ)) == m ||
-        throw(ArgumentError("kappa ($κ) is not valid"))
+    length(filter(x -> x != 0, κ)) == m || throw(ArgumentError("kappa ($κ) is not valid"))
 
     # Create output matrix with same element type as U and requested size
     tilde_U = zeros(eltype(U), m, m)
 
-    @inbounds for (Rl, l) in enumerate(κ)
+    for (Rl, l) in enumerate(κ)
         if l != 0
             (1 ≤ l ≤ m) || throw(BoundsError(tilde_U, (l, :)))
             tilde_U[l, :] = U[Rl, :]
@@ -58,9 +57,9 @@ Check if site `l` is occupied in the kappa configuration vector.
 Throws:
     BoundsError: if l is outside the valid range of kappa
 """
-@inline function is_occupied(kappa::Vector{Int}, l::Int)
+function is_occupied(kappa::Vector{Int}, l::Int)
     @boundscheck 1 ≤ l ≤ length(kappa) || throw(BoundsError(kappa, l))
-    @inbounds return !iszero(kappa[l])
+    return !iszero(kappa[l])
 end
 
 function reevaluateW!(mc::MC{B}) where {B}
@@ -115,17 +114,17 @@ Initialize the Monte Carlo object
 * `N_up` : `Int` number of up spins
 * `N_down` : `Int` number of down spins
 """
-@inline function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
+function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
     lat = LatticeRectangular(params[:nx], params[:ny], B)
-    mc.model = AHmodel(
-        lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
+    mc.model =
+        AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     mc.g = params[:g]
     mc.q = [2 * pi / params[:nx], 2 * pi / params[:ny]]
     mc.κup = FFS(mc.model.U_up)
     mc.κdown = FFS(mc.model.U_down)
     tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
     tilde_U_down = tilde_U(mc.model.U_down, mc.κdown)
-    for attempt in 1:MAX_INVERSION_RETRIES
+    for attempt = 1:MAX_INVERSION_RETRIES
         try
             U_upinvs = tilde_U_up \ I
             U_downinvs = tilde_U_down \ I
@@ -133,7 +132,9 @@ Initialize the Monte Carlo object
         catch e
             if e isa SingularException || e isa LinearAlgebra.LAPACKException
                 if attempt == MAX_INVERSION_RETRIES
-                    error("Matrix inversion failed after $MAX_INVERSION_RETRIES attempts. Please check configuration stability.")
+                    error(
+                        "Matrix inversion failed after $MAX_INVERSION_RETRIES attempts. Please check configuration stability.",
+                    )
                 end
                 # Regenerate configurations and update MC state
                 κup, κdown = FFS(model.U_up), FFS(model.U_down)
@@ -148,13 +149,13 @@ Initialize the Monte Carlo object
     return nothing
 end
 
-@inline function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
+function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}
     mc.κup, mc.κdown = FFS(mc.model.U_up), FFS(mc.model.U_down)
     reevaluateW!(mc)
     return nothing
 end
 
-@inline function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
+function Carlo.measure!(mc::MC{B}, ctx::MCContext) where {B}
     OL = getOL(mc)
     Og = getOg(mc)
     G = exp(mc.g * Og)
@@ -170,8 +171,8 @@ end
     ny = mc.model.lattice.ny
     occ_2d = reshape(site_occupation.(mc.κup) + site_occupation.(mc.κdown), nx, ny)
     nq = zero(ComplexF64)
-    @inbounds for i in 1:nx
-        @inbounds for j in 1:ny
+    for i = 1:nx
+        for j = 1:ny
             nq += occ_2d[i, j] * exp(im * (mc.q[1] * i + mc.q[2] * j))
         end
     end
@@ -207,8 +208,7 @@ Structure Factor in low momentum
 
 ``N_q = ⟨⟨n_qn_{-q}⟩⟩_{disorder}- ⟨⟨n_q⟩⟨n_{-q}⟩⟩_{disorder}``
 """
-@inline function Carlo.register_evaluables(
-        ::Type{MC}, eval::Evaluator, params::AbstractDict)
+function Carlo.register_evaluables(::Type{MC}, eval::Evaluator, params::AbstractDict)
 
     evaluate!(eval, :fg, (:OL, :Og, :OLOg)) do OL, Og, OLOg
         @assert isa(OL, Real) "OL should be a real number, got $OL"
@@ -225,13 +225,13 @@ Structure Factor in low momentum
     return nothing
 end
 
-@inline function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
+function Carlo.write_checkpoint(mc::MC{B}, out::HDF5.Group) where {B}
     out["kappa_up"] = mc.κup
     out["kappa_down"] = mc.κdown
     return nothing
 end
 
-@inline function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
+function Carlo.read_checkpoint!(mc::MC{B}, in::HDF5.Group) where {B}
     mc.κup = read(in, "kappa_up")
     mc.κdown = read(in, "kappa_down")
     return nothing

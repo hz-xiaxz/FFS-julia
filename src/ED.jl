@@ -3,7 +3,13 @@ using ExactDiagonalization
 using LinearAlgebra: eigen
 
 function doED(
-        Lx::Int, Ly::Int, t::Float64, U::Float64, omega::Vector{Float64}, boundary::Char)
+    Lx::Int,
+    Ly::Int,
+    t::Float64,
+    U::Float64,
+    omega::Vector{Float64},
+    boundary::Char,
+)
     @assert length(omega)==Lx * Ly "onsite disorder should be the same as the number of sites, got $(length(omega)) and $(Lx * Ly)"
     global omega_reshape = reshape(omega, Lx, Ly)
 
@@ -15,7 +21,7 @@ function doED(
     lattice = Lattice(unitcell, (Lx, Ly), boundary)
 
     # define the Hilbert space (single-orbital spin-1/2 complex fermion)
-    hilbert = Hilbert(site => Fock{:f}(1, 2) for site in 1:length(lattice))
+    hilbert = Hilbert(site => Fock{:f}(1, 2) for site = 1:length(lattice))
 
     # define the quantum number of the sub-Hilbert space in which the computation to be carried out
     # here the particle number is set to be `length(lattice)` and Sz is set to be 0
@@ -29,17 +35,29 @@ function doED(
 
     function disorder(bond::Bond)
         coordinate = bond.points[1].rcoordinate
-        onsite = omega_reshape[Int(coordinate[1]) + 1, Int(coordinate[2]) + 1]
+        onsite = omega_reshape[Int(coordinate[1])+1, Int(coordinate[2])+1]
         return onsite
     end
 
-    ω_up = Term{:Onsite}(:ωup, 1.0, 0,
+    ω_up = Term{:Onsite}(
+        :ωup,
+        1.0,
+        0,
         Coupling(Index(:, FID{:f}(:, 1 // 2, 2)), Index(:, FID{:f}(:, 1 // 2, 1))),
-        true; amplitude = disorder, ismodulatable = true)
+        true;
+        amplitude = disorder,
+        ismodulatable = true,
+    )
 
-    ω_down = Term{:Onsite}(:ωdown, 1.0, 0,
+    ω_down = Term{:Onsite}(
+        :ωdown,
+        1.0,
+        0,
         Coupling(Index(:, FID{:f}(:, -1 // 2, 2)), Index(:, FID{:f}(:, -1 // 2, 1))),
-        true; amplitude = disorder, ismodulatable = true)
+        true;
+        amplitude = disorder,
+        ismodulatable = true,
+    )
 
     ###########################
 
