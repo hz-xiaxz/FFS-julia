@@ -89,21 +89,26 @@ function AHmodel(
     W::Float64,
     U::Float64,
     N_up::Int,
-    N_down::Int,
+    N_down::Int;
+    fixed_potential::Bool=false,
 ) where {B}
-    omega = randn(Float64, lattice.ns) * W / 2
-    # omega = ones(Float64, lattice.ns) * W / 2
+    # Generate on-site potential based on the keyword argument
+    if fixed_potential
+        omega = zeros(Float64, lattice.ns)
+    else
+        omega = randn(Float64, lattice.ns) * W / 2
+    end
+
     H_mat = getHmat(lattice, t, omega, N_up, N_down)
     # get sampling ensemble U_up and U_down
-    H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
-    # note eigenvalues could be degenerate, so a better way is to use Arnoldi method
-    # also Schur decomposition is more stable than eigen
-    nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev=nev, which=:SR)
-    U_up = decomp.Q[:, 1:N_up]
-    U_down = decomp.Q[:, 1:N_down]
-    if !check_shell(diag(decomp.R), N_up, lattice.ns)
+    F = eigen(Hermitian(H_mat))
+    eigenvectors = F.vectors
+    eigenvalues = F.values
+    U_up = eigenvectors[:, 1:N_up]
+    U_down = eigenvectors[:, 1:N_down]
+
+    if !check_shell(eigenvalues, N_up, lattice.ns)
         @warn "The shell of degenerate eigenstates are not whole-filled"
     end
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
@@ -118,16 +123,8 @@ function fixedAHmodel(
     N_up::Int,
     N_down::Int,
 ) where {B}
-    omega = zeros(Float64, lattice.ns) * W / 2
-    H_mat = getHmat(lattice, t, omega, N_up, N_down)
-    # get sampling ensemble U_up and U_down
-    H_mat_sparse = sparse(H_mat)
-    # select N lowest eigenvectors as the sampling ensemble
-    nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev=nev, which=:SR)
-    U_up = decomp.Q[:, 1:N_up]
-    U_down = decomp.Q[:, 1:N_down]
-    return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
+    # This is now just a simple call to the main function.
+    return AHmodel(lattice, t, W, U, N_up, N_down, fixed_potential=true)
 end
 
 """
