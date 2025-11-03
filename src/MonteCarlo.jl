@@ -120,33 +120,44 @@ function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
         AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     mc.g = params[:g]
     mc.q = [2 * pi / params[:nx], 2 * pi / params[:ny]]
-    mc.κup = FFS(mc.model.U_up)
-    mc.κdown = FFS(mc.model.U_down)
-    tilde_U_up = tilde_U(mc.model.U_up, mc.κup)
-    tilde_U_down = tilde_U(mc.model.U_down, mc.κdown)
-    for attempt = 1:MAX_INVERSION_RETRIES
+    mc.κup, mc.κdown=
+        generate_and_invert_matrices(mc.model, I, max_retries=MAX_INVERSION_RETRIES)
+    return nothing
+end
+
+"""
+    generate_and_invert_matrices(model, I; max_retries=10)
+
+Attempts to generate stable `tilde_U` matrices from a `model` and invert them.
+Retries the process up to `max_retries` times if the matrices are singular.
+
+Returns a tuple `(U_upinvs, U_downinvs, κup, κdown, tilde_U_up, tilde_U_down)` on success.
+Throws an error if all attempts fail.
+"""
+function generate_and_invert_matrices(model, I; max_retries::Int)
+    for _ = 1:max_retries
+        # Generate a fresh set of matrices on each attempt
+        κup, κdown = FFS(model.U_up), FFS(model.U_down)
+        tilde_U_up = tilde_U(model.U_up, κup)
+        tilde_U_down = tilde_U(model.U_down, κdown)
+
         try
-            U_upinvs = tilde_U_up \ I
-            U_downinvs = tilde_U_down \ I
-            break  # Success - continue with these values
+            U_upinvs = inv(tilde_U_up)
+            U_downinvs = inv(tilde_U_down) 
+
+            # On success, return all the results we need
+            return κup, κdown
         catch e
-            if e isa SingularException || e isa LinearAlgebra.LAPACKException
-                if attempt == MAX_INVERSION_RETRIES
-                    error(
-                        "Matrix inversion failed after $MAX_INVERSION_RETRIES attempts. Please check configuration stability.",
-                    )
-                end
-                # Regenerate configurations and update MC state
-                κup, κdown = FFS(model.U_up), FFS(model.U_down)
-                tilde_U_up = tilde_U(model.U_up, κup)
-                tilde_U_down = tilde_U(model.U_down, κdown)
-                continue
-            else
-                rethrow(e)  # If it's not a matrix inversion error,
+            # If it's not a singular exception, we want to know immediately.
+            if !(e isa SingularException || e isa LinearAlgebra.LAPACKException)
+                rethrow(e)
             end
+            # Otherwise, the error is expected. We'll let the loop try again.
         end
     end
-    return nothing
+
+    # If the function has not returned by now, all attempts have failed.
+    error("Matrix inversion failed after $max_retries attempts. Please check configuration stability.")
 end
 
 function Carlo.sweep!(mc::MC{B}, ctx::MCContext) where {B}

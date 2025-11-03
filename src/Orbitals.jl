@@ -40,7 +40,7 @@ function getHmat(
 ) where {B}
     ns = lattice.ns
     N = N_up + N_down
-    @assert ns==N "Should be hall-filling"
+    @assert ns == N "Should be hall-filling"
     tunneling = zeros(Float64, ns, ns)
     for (idx, neighbors) in enumerate(lattice.neigh)
         for j in neighbors
@@ -62,9 +62,11 @@ function check_shell(E::AbstractArray, Nup::Int, ns::Int)
     # iteratively find degenerate spaces
     start_shell = 1
     while start_shell < length(E)
-        num = findlast(x -> isapprox(x, E[start_shell], atol = 1e-10), E)
-        push!(shell_pool, (start_shell, num))
-        start_shell = num + 1
+        let s = start_shell
+            num = findlast(x -> isapprox(x, E[s], atol=1e-10), E)
+            push!(shell_pool, (s, num))
+            start_shell = num + 1
+        end
     end
     # the number of N_up and N_down should be at least > num
     shell = filter(
@@ -98,7 +100,7 @@ function AHmodel(
     # note eigenvalues could be degenerate, so a better way is to use Arnoldi method
     # also Schur decomposition is more stable than eigen
     nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev = nev, which = :SR)
+    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev=nev, which=:SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     if !check_shell(diag(decomp.R), N_up, lattice.ns)
@@ -122,7 +124,7 @@ function fixedAHmodel(
     H_mat_sparse = sparse(H_mat)
     # select N lowest eigenvectors as the sampling ensemble
     nev = max(N_up, N_down)
-    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev = nev, which = :SR)
+    decomp, history = ArnoldiMethod.partialschur(H_mat_sparse, nev=nev, which=:SR)
     U_up = decomp.Q[:, 1:N_up]
     U_down = decomp.Q[:, 1:N_down]
     return AHmodel{B}(lattice, t, W, U, N_up, N_down, omega, U_up, U_down)
@@ -134,7 +136,7 @@ end
 Compute ``|x'> = H|x>`` where ``H = -t ∑_{<i,j>} c_i^† c_j + U ∑_i n_{i↓} n_{i↑} + ∑_i ω_i n_i``
 """
 function getxprime(orb::AHmodel{B}, κup::Vector{Int}, κdown::Vector{Int}) where {B}
-    @assert length(κup)==length(κdown) "Length of κ↑ and κ↓ should match the number of sites"
+    @assert length(κup) == length(κdown) "Length of κ↑ and κ↓ should match the number of sites"
 
     # Initialize result dictionary with better key type
     xprime = Dict{Tuple{Int,Int,Int,Int},Float64}()
