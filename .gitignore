@@ -12,3 +12,5 @@ env
 node_modules
 data/*
 tmp/*
+examples/*
+.vscode/
