@@ -120,7 +120,7 @@ function Carlo.init!(mc::MC{B}, ctx::MCContext, params::AbstractDict) where {B}
         AHmodel(lat, params[:t], params[:W], params[:U], params[:N_up], params[:N_down])
     mc.g = params[:g]
     mc.q = [2 * pi / params[:nx], 2 * pi / params[:ny]]
-    mc.κup, mc.κdown=
+    mc.κup, mc.κdown =
         generate_and_invert_matrices(mc.model, I, max_retries=MAX_INVERSION_RETRIES)
     return nothing
 end
@@ -143,7 +143,7 @@ function generate_and_invert_matrices(model, I; max_retries::Int)
 
         try
             U_upinvs = inv(tilde_U_up)
-            U_downinvs = inv(tilde_U_down) 
+            U_downinvs = inv(tilde_U_down)
 
             # On success, return all the results we need
             return κup, κdown
