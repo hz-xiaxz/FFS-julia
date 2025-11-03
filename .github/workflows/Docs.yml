@@ -45,9 +45,9 @@ jobs:
         run: |
           julia --project=docs -e '
             using Documenter: DocMeta, doctest
-            using FastFermionSampling
-            DocMeta.setdocmeta!(FastFermionSampling, :DocTestSetup, :(using FastFermionSampling); recursive=true)
-            doctest(FastFermionSampling)'
+            using FFS
+            DocMeta.setdocmeta!(FFS, :DocTestSetup, :(using FFS); recursive=true)
+            doctest(FFS)'
       - name: Generate and deploy documentation
         run: julia --project=docs docs/make.jl
         env:
