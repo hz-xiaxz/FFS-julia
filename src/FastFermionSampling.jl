@@ -6,8 +6,6 @@ using StatsBase
 using LinearAlgebra
 using Carlo
 using HDF5
-using SparseArrays
-using ArnoldiMethod
 
 export FFS, AHmodel, LatticeRectangular, getHmat, fast_G_update, Spin, Up, Down
 export Periodic, Open, getxprime
